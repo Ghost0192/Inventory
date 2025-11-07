@@ -1,12 +1,16 @@
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import { LogOut, User, ChevronDown } from "lucide-react"
+import { useState } from "react"
 
 interface HeaderProps {
     nombreUsuario: string
+    nombre?: string
 }
 
 export default function Header({ nombreUsuario }: HeaderProps) {
     const router = useRouter()
+    const [menuOpen, setMenuOpen] = useState(false)
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -14,14 +18,35 @@ export default function Header({ nombreUsuario }: HeaderProps) {
     }
 
     return (
-        <header className="w-full h-16 bg-white shadow flex items-center justify-between px-6">
-            <h1 className="font-bold text-lg">Bienvenido, {nombreUsuario}</h1>
-            <button
-                onClick={handleLogout}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-            >
-                Logout
-            </button>
+        <header className="w-full bg-white shadow flex items-center justify-between px-4 md:px-6 py-3 rounded-2xl relative">
+            <h1 className="font-semibold text-base sm:text-lg text-gray-800">
+                Bienvenido,{" "}
+                <span className="text-green-900 font-bold">{nombreUsuario}</span>
+            </h1>
+
+            {/* 🧑‍💼 Menú de usuario */}
+            <div className="relative">
+                <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md hover:bg-gray-200"
+                >
+                    <User className="w-5 h-5 text-gray-700" />
+                    <ChevronDown className="w-4 h-4 text-gray-700" />
+                </button>
+
+                {/* 🔽 Dropdown */}
+                {menuOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg z-50">
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar sesión
+                        </button>
+                    </div>
+                )}
+            </div>
         </header>
     )
 }

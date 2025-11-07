@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
-import Sidebar from "./components/Sidebar"
-import Header from "./components/Header"
-import AdminView from "./components/AdminView"
-import AlmacenistaView from "./components/AlmacenistaView"
+import AdminView from "./components/views/AdminView"
+import AlmacenistaView from "./components/views/AlmacenistaView"
+import SolicitanteView from "./components/views/SolicitanteView"
 
 export default function DashboardPage() {
     const router = useRouter()
@@ -43,10 +42,14 @@ export default function DashboardPage() {
 
     return (
         <div className="flex h-screen">
-            <Sidebar rol={perfil!.rol} />
+            
             <div className="flex-1 flex flex-col">
-                <Header nombreUsuario={perfil!.nombre} />
-                {perfil!.rol === "almacenista" ? <AlmacenistaView /> : <AdminView />}
+
+                <div className="flex-1 bg-gray-50">
+                    {perfil!.rol === "almacenista" && <AlmacenistaView />}
+                    {(perfil!.rol === "admin" || perfil!.rol === "gerente") && <AdminView />}
+                    {perfil!.rol === "solicitante" && <SolicitanteView />}
+                </div>
             </div>
         </div>
     )
