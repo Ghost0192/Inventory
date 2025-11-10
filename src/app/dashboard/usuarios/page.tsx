@@ -2,25 +2,33 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import {
+    Card, CardHeader, CardTitle, CardContent,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+    Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from "@/components/ui/select"
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog"
 
 export default function UsuariosPage() {
     const [usuarios, setUsuarios] = useState<any[]>([])
-    const [filtro, setFiltro] = useState("nombre_completo")
     const [busqueda, setBusqueda] = useState("")
+    const [filtro, setFiltro] = useState("nombre_completo")
 
     const [form, setForm] = useState({
         correo: "",
+        password: "",
         nombre_completo: "",
         apellido_paterno: "",
         apellido_materno: "",
         telefono: "",
-        tipo_usuario: "",
+        rol: "solicitante",
+        sucursal: "",
     })
 
     const [editUser, setEditUser] = useState<any | null>(null)
@@ -28,12 +36,12 @@ export default function UsuariosPage() {
 
     // 🔹 Cargar usuarios
     async function fetchUsuarios() {
-        const { data, error } = await supabase.from("usuarios").select(`
-      id, correo, nombre_completo, telefono, activo,
-      perfil_usuario (tipo_usuario),
-      locacion (pais, comuna_ubicacion)
-    `)
-        if (!error && data) setUsuarios(data)
+        const { data, error } = await supabase
+            .from("a_usuarios")
+            .select("id, correo, nombre_completo, telefono, rol, sucursal, activo, creado_en")
+
+        if (error) console.error(error)
+        else setUsuarios(data)
     }
 
     useEffect(() => {
@@ -43,63 +51,104 @@ export default function UsuariosPage() {
     // 🔍 Buscar usuarios
     async function handleBuscar() {
         const { data, error } = await supabase
-            .from("usuarios")
-            .select(`
-        id, correo, nombre_completo, telefono, activo,
-        perfil_usuario (tipo_usuario),
-        locacion (pais, comuna_ubicacion)
-      `)
+            .from("a_usuarios")
+            .select("id, correo, nombre_completo, telefono, rol, sucursal, activo, creado_en")
             .ilike(filtro, `%${busqueda}%`)
 
         if (!error && data) setUsuarios(data)
     }
 
-    // 🧾 Guardar usuario
+    // 🧾 Registrar usuario nuevo (auth + perfil)
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        const { error } = await supabase.from("usuarios").insert([form])
-        if (!error) {
+
+        try {
+            // 🔐 Crear usuario en auth
+            const { data, error: signUpError } = await supabase.auth.signUp({
+                email: form.correo,
+                password: form.password,
+                options: {
+                    data: { full_name: form.nombre_completo },
+                },
+            })
+
+            if (signUpError) throw signUpError
+
+            const auth_uid = data.user?.id
+            if (!auth_uid) throw new Error("No se pudo crear el usuario en auth.")
+
+            // ⚙️ Actualizar datos en a_usuarios (trigger lo crea vacío)
+            const { error: updateError } = await supabase
+                .from("a_usuarios")
+                .update({
+                    nombre_completo: form.nombre_completo,
+                    apellido_paterno: form.apellido_paterno,
+                    apellido_materno: form.apellido_materno,
+                    telefono: form.telefono,
+                    rol: form.rol,
+                    sucursal: form.sucursal,
+                })
+                .eq("auth_uid", auth_uid)
+
+            if (updateError) throw updateError
+
+            // ✅ Limpiar formulario
             setForm({
                 correo: "",
+                password: "",
                 nombre_completo: "",
                 apellido_paterno: "",
                 apellido_materno: "",
                 telefono: "",
-                tipo_usuario: "",
+                rol: "solicitante",
+                sucursal: "",
             })
             fetchUsuarios()
-        } else {
-            console.error(error)
+            alert("Usuario creado exitosamente.")
+        } catch (err) {
+            console.error(err)
+            alert("Error al crear usuario.")
         }
     }
 
-    // ✏️ Actualizar usuario (FIXED)
+    // ✏️ Actualizar usuario
     async function handleUpdate() {
         if (!editUser) return
 
         const { error } = await supabase
-            .from("usuarios")
+            .from("a_usuarios")
             .update({
-                correo: editUser.correo,
                 nombre_completo: editUser.nombre_completo,
                 telefono: editUser.telefono,
+                rol: editUser.rol,
+                sucursal: editUser.sucursal,
+                activo: editUser.activo,
             })
             .eq("id", editUser.id)
 
         if (error) {
             console.error("Error al actualizar:", error)
+            alert("Error al actualizar el usuario.")
             return
         }
 
         setEditUser(null)
-        await fetchUsuarios()
+        fetchUsuarios()
     }
 
     // ❌ Eliminar usuario
     async function handleDelete() {
         if (!deleteUser) return
-        const { error } = await supabase.from("usuarios").delete().eq("id", deleteUser.id)
-        if (!error) {
+
+        const { error } = await supabase
+            .from("a_usuarios")
+            .delete()
+            .eq("id", deleteUser.id)
+
+        if (error) {
+            console.error(error)
+            alert("Error al eliminar usuario.")
+        } else {
             setDeleteUser(null)
             fetchUsuarios()
         }
@@ -110,7 +159,7 @@ export default function UsuariosPage() {
             {/* ======================= FORMULARIO ======================= */}
             <Card className="shadow-sm">
                 <CardHeader>
-                    <CardTitle>Agregar nuevo usuario</CardTitle>
+                    <CardTitle>Registrar nuevo usuario</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form
@@ -118,7 +167,7 @@ export default function UsuariosPage() {
                         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
                     >
                         <div>
-                            <Label>Correo</Label>
+                            <Label>Correo electrónico</Label>
                             <Input
                                 value={form.correo}
                                 onChange={(e) => setForm({ ...form, correo: e.target.value })}
@@ -126,12 +175,19 @@ export default function UsuariosPage() {
                             />
                         </div>
                         <div>
+                            <Label>Contraseña</Label>
+                            <Input
+                                type="password"
+                                value={form.password}
+                                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div>
                             <Label>Nombre completo</Label>
                             <Input
                                 value={form.nombre_completo}
-                                onChange={(e) =>
-                                    setForm({ ...form, nombre_completo: e.target.value })
-                                }
+                                onChange={(e) => setForm({ ...form, nombre_completo: e.target.value })}
                                 required
                             />
                         </div>
@@ -139,18 +195,14 @@ export default function UsuariosPage() {
                             <Label>Apellido paterno</Label>
                             <Input
                                 value={form.apellido_paterno}
-                                onChange={(e) =>
-                                    setForm({ ...form, apellido_paterno: e.target.value })
-                                }
+                                onChange={(e) => setForm({ ...form, apellido_paterno: e.target.value })}
                             />
                         </div>
                         <div>
                             <Label>Apellido materno</Label>
                             <Input
                                 value={form.apellido_materno}
-                                onChange={(e) =>
-                                    setForm({ ...form, apellido_materno: e.target.value })
-                                }
+                                onChange={(e) => setForm({ ...form, apellido_materno: e.target.value })}
                             />
                         </div>
                         <div>
@@ -161,10 +213,10 @@ export default function UsuariosPage() {
                             />
                         </div>
                         <div>
-                            <Label>Tipo de usuario</Label>
+                            <Label>Rol</Label>
                             <Select
-                                onValueChange={(v) => setForm({ ...form, tipo_usuario: v })}
-                                defaultValue={form.tipo_usuario}
+                                onValueChange={(v) => setForm({ ...form, rol: v })}
+                                defaultValue={form.rol}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecciona un rol" />
@@ -177,6 +229,13 @@ export default function UsuariosPage() {
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div>
+                            <Label>Sucursal</Label>
+                            <Input
+                                value={form.sucursal}
+                                onChange={(e) => setForm({ ...form, sucursal: e.target.value })}
+                            />
+                        </div>
                         <div className="sm:col-span-2 lg:col-span-3 flex justify-end mt-4">
                             <Button type="submit" className="w-full sm:w-auto">
                                 Guardar usuario
@@ -186,16 +245,16 @@ export default function UsuariosPage() {
                 </CardContent>
             </Card>
 
-            {/* ======================= TABLA (Desktop) ======================= */}
-            <Card className="shadow-sm hidden sm:block">
+            {/* ======================= TABLA DE USUARIOS ======================= */}
+            <Card className="shadow-sm">
                 <CardHeader>
-                    <CardTitle>Administrar Usuarios</CardTitle>
+                    <CardTitle>Usuarios registrados</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {/* 🔍 Buscador */}
                     <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-4">
                         <div className="w-full sm:w-40">
-                            <Label>Tipo de búsqueda</Label>
+                            <Label>Buscar por</Label>
                             <Select onValueChange={setFiltro} defaultValue={filtro}>
                                 <SelectTrigger className="w-full">
                                     <SelectValue />
@@ -208,9 +267,9 @@ export default function UsuariosPage() {
                             </Select>
                         </div>
                         <div className="flex-1 min-w-[200px]">
-                            <Label>Buscar</Label>
+                            <Label>Valor</Label>
                             <Input
-                                placeholder="Ingrese valor a buscar..."
+                                placeholder="Ingrese valor..."
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
                             />
@@ -220,7 +279,7 @@ export default function UsuariosPage() {
                         </Button>
                     </div>
 
-                    {/* 🧾 Tabla de usuarios */}
+                    {/* 🧾 Tabla */}
                     <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
                         <table className="min-w-[800px] text-sm text-gray-700">
                             <thead>
@@ -228,8 +287,8 @@ export default function UsuariosPage() {
                                     <th className="px-4 py-2">Nombre</th>
                                     <th className="px-4 py-2">Correo</th>
                                     <th className="px-4 py-2">Teléfono</th>
-                                    <th className="px-4 py-2">Perfil</th>
-                                    <th className="px-4 py-2">Ubicación</th>
+                                    <th className="px-4 py-2">Rol</th>
+                                    <th className="px-4 py-2">Sucursal</th>
                                     <th className="px-4 py-2">Activo</th>
                                     <th className="px-4 py-2 text-center">Acciones</th>
                                 </tr>
@@ -240,21 +299,13 @@ export default function UsuariosPage() {
                                         <td className="px-4 py-2">{u.nombre_completo}</td>
                                         <td className="px-4 py-2">{u.correo}</td>
                                         <td className="px-4 py-2">{u.telefono}</td>
-                                        <td className="px-4 py-2">
-                                            {u.perfil_usuario?.tipo_usuario}
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            {u.locacion?.pais} - {u.locacion?.comuna_ubicacion}
-                                        </td>
+                                        <td className="px-4 py-2">{u.rol}</td>
+                                        <td className="px-4 py-2">{u.sucursal}</td>
                                         <td className="px-4 py-2">
                                             {u.activo ? (
-                                                <span className="text-green-600 font-medium">
-                                                    Activo
-                                                </span>
+                                                <span className="text-green-600 font-medium">Activo</span>
                                             ) : (
-                                                <span className="text-red-600 font-medium">
-                                                    Inactivo
-                                                </span>
+                                                <span className="text-red-600 font-medium">Inactivo</span>
                                             )}
                                         </td>
                                         <td className="px-4 py-2 flex gap-2 justify-center">
@@ -281,38 +332,6 @@ export default function UsuariosPage() {
                 </CardContent>
             </Card>
 
-            {/* ======================= LISTA MÓVIL (Cards) ======================= */}
-            <div className="sm:hidden space-y-4">
-                {usuarios.map((u) => (
-                    <Card key={u.id} className="shadow-md border border-gray-200">
-                        <CardContent className="p-4 space-y-2">
-                            <p className="text-sm font-semibold">{u.nombre_completo}</p>
-                            <p className="text-xs text-gray-500">{u.correo}</p>
-                            <p className="text-xs">{u.telefono}</p>
-                            <p className="text-xs text-gray-500">
-                                {u.perfil_usuario?.tipo_usuario || "Sin rol"}
-                            </p>
-                            <div className="flex justify-between pt-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setEditUser(u)}
-                                >
-                                    Editar
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => setDeleteUser(u)}
-                                >
-                                    Eliminar
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-
             {/* ======================= MODAL EDITAR ======================= */}
             <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
                 <DialogContent>
@@ -321,18 +340,11 @@ export default function UsuariosPage() {
                     </DialogHeader>
                     {editUser && (
                         <div className="space-y-3">
-                            <Label>Nombre</Label>
+                            <Label>Nombre completo</Label>
                             <Input
                                 value={editUser.nombre_completo}
                                 onChange={(e) =>
                                     setEditUser({ ...editUser, nombre_completo: e.target.value })
-                                }
-                            />
-                            <Label>Correo</Label>
-                            <Input
-                                value={editUser.correo}
-                                onChange={(e) =>
-                                    setEditUser({ ...editUser, correo: e.target.value })
                                 }
                             />
                             <Label>Teléfono</Label>
@@ -342,6 +354,21 @@ export default function UsuariosPage() {
                                     setEditUser({ ...editUser, telefono: e.target.value })
                                 }
                             />
+                            <Label>Rol</Label>
+                            <Select
+                                onValueChange={(v) => setEditUser({ ...editUser, rol: v })}
+                                defaultValue={editUser.rol}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="gerente">Gerente</SelectItem>
+                                    <SelectItem value="almacenista">Almacenista</SelectItem>
+                                    <SelectItem value="solicitante">Solicitante</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     )}
                     <DialogFooter>
@@ -358,9 +385,7 @@ export default function UsuariosPage() {
                             ¿Seguro que deseas eliminar este usuario?
                         </DialogTitle>
                     </DialogHeader>
-                    <p className="text-sm text-gray-500">
-                        Esta acción no se puede deshacer.
-                    </p>
+                    <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setDeleteUser(null)}>
                             Cancelar

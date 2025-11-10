@@ -4,11 +4,11 @@ import { LogOut, User, ChevronDown } from "lucide-react"
 import { useState } from "react"
 
 interface HeaderProps {
-    nombreUsuario: string
-    nombre?: string
+    nombreCompleto: string
+    correo: string
 }
 
-export default function Header({ nombreUsuario }: HeaderProps) {
+export default function Header({ nombreCompleto, correo }: HeaderProps) {
     const router = useRouter()
     const [menuOpen, setMenuOpen] = useState(false)
 
@@ -19,10 +19,13 @@ export default function Header({ nombreUsuario }: HeaderProps) {
 
     return (
         <header className="w-full bg-white shadow flex items-center justify-between px-4 md:px-6 py-3 rounded-2xl relative">
-            <h1 className="font-semibold text-base sm:text-lg text-gray-800">
-                Bienvenido,{" "}
-                <span className="text-green-900 font-bold">{nombreUsuario}</span>
-            </h1>
+            <div>
+                <h1 className="font-semibold text-base sm:text-lg text-gray-800">
+                    Bienvenido,{" "}
+                    <span className="text-green-900 font-bold">{nombreCompleto}</span>
+                </h1>
+                <p className="text-sm text-gray-500">{correo}</p>
+            </div>
 
             {/* 🧑‍💼 Menú de usuario */}
             <div className="relative">

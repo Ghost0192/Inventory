@@ -8,7 +8,7 @@ import Header from './components/Header'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter()
-    const [perfil, setPerfil] = useState<{ nombre: string; rol: string } | null>(null)
+    const [perfil, setPerfil] = useState<{ nombre: string; correo: string; rol: string } | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -20,9 +20,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }
 
             const { data, error } = await supabase
-                .from('perfiles')
-                .select('nombre, rol')
-                .eq('id', session.user.id)
+                .from('a_usuarios')
+                .select('nombre_completo, correo, rol')
+                .eq('auth_uid', session.user.id)
                 .single()
 
             if (error || !data) {
@@ -30,7 +30,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 return
             }
 
-            setPerfil(data)
+            setPerfil({
+                nombre: data.nombre_completo,
+                correo: data.correo,
+                rol: data.rol,
+            })
             setLoading(false)
         }
 
@@ -41,15 +45,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="flex h-screen bg-gray-50">
-            {/* Sidebar dinámico según rol */}
             <Sidebar role={perfil!.rol} />
-
-            {/* Contenido principal */}
             <div className="flex flex-col flex-1">
-                {/* Header con nombre del usuario */}
-                <Header nombreUsuario={perfil!.nombre} nombre={''} />
+                {/* 👇 Aquí pasamos nombre completo y correo */}
+                <Header nombreCompleto={perfil!.nombre} correo={perfil!.correo} />
 
-                {/* Contenido dinámico (la vista actual) */}
                 <main className="flex-1 overflow-y-auto p-6">
                     {children}
                 </main>

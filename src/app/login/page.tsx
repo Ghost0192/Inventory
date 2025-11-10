@@ -16,16 +16,30 @@ export default function LoginPage() {
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
-    // 🔹 Verifica si hay sesión activa al cargar la página
+    // 🧠 Verifica sesión activa y escucha cambios
     useEffect(() => {
-        supabase.auth.getSession().then(({ data }) => {
+        const initSession = async () => {
+            const { data } = await supabase.auth.getSession()
             if (data.session) {
-                router.push("/dashboard")
+                router.replace("/dashboard")
+            }
+        }
+
+        initSession()
+
+        // 🔄 Escucha cambios en el estado de autenticación
+        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session) {
+                router.replace("/dashboard")
             }
         })
+
+        return () => {
+            listener.subscription.unsubscribe()
+        }
     }, [router])
 
-    // 🔹 Manejo de login
+    // 🔐 Manejo de login
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
@@ -41,7 +55,8 @@ export default function LoginPage() {
         if (error) {
             setError(error.message)
         } else {
-            router.push("/dashboard")
+            // Redirige después de iniciar sesión correctamente
+            router.replace("/dashboard")
         }
     }
 
@@ -95,7 +110,11 @@ export default function LoginPage() {
                     />
                 </div>
 
-                {error && <p className="text-red-300 mb-4 text-center">⚠ {error}</p>}
+                {error && (
+                    <p className="text-red-300 mb-4 text-center">
+                        ⚠ {error}
+                    </p>
+                )}
 
                 <Button
                     type="submit"
