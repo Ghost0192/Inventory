@@ -3,8 +3,12 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import {
-    Card, CardHeader, CardTitle, CardContent,
-} from "@/components/ui/card"
+    Card, 
+    CardHeader, 
+    CardTitle, 
+    CardContent,
+}
+from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -19,6 +23,7 @@ export default function UsuariosPage() {
     const [usuarios, setUsuarios] = useState<any[]>([])
     const [busqueda, setBusqueda] = useState("")
     const [filtro, setFiltro] = useState("nombre_completo")
+    const [loading, setLoading] = useState(false)
 
     const [form, setForm] = useState({
         correo: "",
@@ -40,8 +45,7 @@ export default function UsuariosPage() {
             .from("a_usuarios")
             .select("id, correo, nombre_completo, telefono, rol, sucursal, activo, creado_en")
 
-        if (error) console.error(error)
-        else setUsuarios(data)
+        if (!error && data) setUsuarios(data)
     }
 
     useEffect(() => {
@@ -58,12 +62,16 @@ export default function UsuariosPage() {
         if (!error && data) setUsuarios(data)
     }
 
-    // 🧾 Registrar usuario nuevo (auth + perfil)
+    // 🧾 Registrar usuario nuevo
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-
+        setLoading(true)
         try {
-            // 🔐 Crear usuario en auth
+            if (!form.correo || !form.password || !form.nombre_completo) {
+                alert("Por favor, completa todos los campos requeridos.")
+                return
+            }
+
             const { data, error: signUpError } = await supabase.auth.signUp({
                 email: form.correo,
                 password: form.password,
@@ -77,7 +85,6 @@ export default function UsuariosPage() {
             const auth_uid = data.user?.id
             if (!auth_uid) throw new Error("No se pudo crear el usuario en auth.")
 
-            // ⚙️ Actualizar datos en a_usuarios (trigger lo crea vacío)
             const { error: updateError } = await supabase
                 .from("a_usuarios")
                 .update({
@@ -92,7 +99,6 @@ export default function UsuariosPage() {
 
             if (updateError) throw updateError
 
-            // ✅ Limpiar formulario
             setForm({
                 correo: "",
                 password: "",
@@ -104,17 +110,18 @@ export default function UsuariosPage() {
                 sucursal: "",
             })
             fetchUsuarios()
-            alert("Usuario creado exitosamente.")
+            alert("✅ Usuario creado exitosamente.")
         } catch (err) {
             console.error(err)
-            alert("Error al crear usuario.")
+            alert("❌ Error al crear usuario.")
+        } finally {
+            setLoading(false)
         }
     }
 
     // ✏️ Actualizar usuario
     async function handleUpdate() {
         if (!editUser) return
-
         const { error } = await supabase
             .from("a_usuarios")
             .update({
@@ -127,35 +134,26 @@ export default function UsuariosPage() {
             .eq("id", editUser.id)
 
         if (error) {
-            console.error("Error al actualizar:", error)
-            alert("Error al actualizar el usuario.")
-            return
+            alert("Error al actualizar usuario.")
+        } else {
+            setEditUser(null)
+            fetchUsuarios()
         }
-
-        setEditUser(null)
-        fetchUsuarios()
     }
 
     // ❌ Eliminar usuario
     async function handleDelete() {
         if (!deleteUser) return
-
-        const { error } = await supabase
-            .from("a_usuarios")
-            .delete()
-            .eq("id", deleteUser.id)
-
-        if (error) {
-            console.error(error)
-            alert("Error al eliminar usuario.")
-        } else {
+        const { error } = await supabase.from("a_usuarios").delete().eq("id", deleteUser.id)
+        if (error) alert("Error al eliminar usuario.")
+        else {
             setDeleteUser(null)
             fetchUsuarios()
         }
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 p-2 sm:p-4">
             {/* ======================= FORMULARIO ======================= */}
             <Card className="shadow-sm">
                 <CardHeader>
@@ -167,15 +165,16 @@ export default function UsuariosPage() {
                         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
                     >
                         <div>
-                            <Label>Correo electrónico</Label>
+                            <Label>Correo electrónico*</Label>
                             <Input
+                                type="email"
                                 value={form.correo}
                                 onChange={(e) => setForm({ ...form, correo: e.target.value })}
                                 required
                             />
                         </div>
                         <div>
-                            <Label>Contraseña</Label>
+                            <Label>Contraseña*</Label>
                             <Input
                                 type="password"
                                 value={form.password}
@@ -184,7 +183,7 @@ export default function UsuariosPage() {
                             />
                         </div>
                         <div>
-                            <Label>Nombre completo</Label>
+                            <Label>Nombre completo*</Label>
                             <Input
                                 value={form.nombre_completo}
                                 onChange={(e) => setForm({ ...form, nombre_completo: e.target.value })}
@@ -208,16 +207,15 @@ export default function UsuariosPage() {
                         <div>
                             <Label>Teléfono</Label>
                             <Input
+                                type="tel"
+                                placeholder="10 dígitos"
                                 value={form.telefono}
                                 onChange={(e) => setForm({ ...form, telefono: e.target.value })}
                             />
                         </div>
                         <div>
                             <Label>Rol</Label>
-                            <Select
-                                onValueChange={(v) => setForm({ ...form, rol: v })}
-                                defaultValue={form.rol}
-                            >
+                            <Select onValueChange={(v) => setForm({ ...form, rol: v })} value={form.rol}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecciona un rol" />
                                 </SelectTrigger>
@@ -230,35 +228,45 @@ export default function UsuariosPage() {
                             </Select>
                         </div>
                         <div>
+                        <div>
                             <Label>Sucursal</Label>
-                            <Input
-                                value={form.sucursal}
-                                onChange={(e) => setForm({ ...form, sucursal: e.target.value })}
-                            />
+                            <Select onValueChange={(v) => setForm({ ...form, rol: v })} value={form.rol}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un rol" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="admin">Hijuelas</SelectItem>
+                                    <SelectItem value="gerente">Osorno</SelectItem>
+                                    <SelectItem value="almacenista">Queretaro</SelectItem>
+                                    <SelectItem value="solicitante">ICA</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3 flex justify-end mt-4">
-                            <Button type="submit" className="w-full sm:w-auto">
-                                Guardar usuario
+                            <Button
+                                type="submit"
+                                className="w-full sm:w-auto"
+                                disabled={loading}
+                            >
+                                {loading ? "Guardando..." : "Guardar usuario"}
                             </Button>
                         </div>
                     </form>
                 </CardContent>
             </Card>
 
-            {/* ======================= TABLA DE USUARIOS ======================= */}
+            {/* ======================= TABLA ======================= */}
             <Card className="shadow-sm">
                 <CardHeader>
                     <CardTitle>Usuarios registrados</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {/* 🔍 Buscador */}
                     <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-4">
                         <div className="w-full sm:w-40">
                             <Label>Buscar por</Label>
-                            <Select onValueChange={setFiltro} defaultValue={filtro}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
+                            <Select onValueChange={setFiltro} value={filtro}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="nombre_completo">Nombre</SelectItem>
                                     <SelectItem value="correo">Correo</SelectItem>
@@ -279,11 +287,10 @@ export default function UsuariosPage() {
                         </Button>
                     </div>
 
-                    {/* 🧾 Tabla */}
-                    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-                        <table className="min-w-[800px] text-sm text-gray-700">
-                            <thead>
-                                <tr className="bg-gray-100 text-gray-700 text-left">
+                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                        <table className="w-auto text-sm text-gray-700">
+                            <thead className="bg-gray-100 text-gray-700">
+                                <tr>
                                     <th className="px-4 py-2">Nombre</th>
                                     <th className="px-4 py-2">Correo</th>
                                     <th className="px-4 py-2">Teléfono</th>
@@ -343,25 +350,19 @@ export default function UsuariosPage() {
                             <Label>Nombre completo</Label>
                             <Input
                                 value={editUser.nombre_completo}
-                                onChange={(e) =>
-                                    setEditUser({ ...editUser, nombre_completo: e.target.value })
-                                }
+                                onChange={(e) => setEditUser({ ...editUser, nombre_completo: e.target.value })}
                             />
                             <Label>Teléfono</Label>
                             <Input
                                 value={editUser.telefono}
-                                onChange={(e) =>
-                                    setEditUser({ ...editUser, telefono: e.target.value })
-                                }
+                                onChange={(e) => setEditUser({ ...editUser, telefono: e.target.value })}
                             />
                             <Label>Rol</Label>
                             <Select
                                 onValueChange={(v) => setEditUser({ ...editUser, rol: v })}
-                                defaultValue={editUser.rol}
+                                value={editUser.rol}
                             >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="admin">Admin</SelectItem>
                                     <SelectItem value="gerente">Gerente</SelectItem>
@@ -381,18 +382,12 @@ export default function UsuariosPage() {
             <Dialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>
-                            ¿Seguro que deseas eliminar este usuario?
-                        </DialogTitle>
+                        <DialogTitle>¿Seguro que deseas eliminar este usuario?</DialogTitle>
                     </DialogHeader>
                     <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteUser(null)}>
-                            Cancelar
-                        </Button>
-                        <Button variant="destructive" onClick={handleDelete}>
-                            Eliminar
-                        </Button>
+                        <Button variant="outline" onClick={() => setDeleteUser(null)}>Cancelar</Button>
+                        <Button variant="destructive" onClick={handleDelete}>Eliminar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
