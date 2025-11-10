@@ -10,7 +10,7 @@ export default function AdminView() {
     const [totalUsuarios, setTotalUsuarios] = useState(0)
     const [ordenesEntrantes, setOrdenesEntrantes] = useState(0)
     const [ordenesCumplidas, setOrdenesCumplidas] = useState(0)
-        type ProductoTop = { nombre: string; cantidad: number }
+    type ProductoTop = { nombre: string; cantidad: number }
     const [productosTop, setProductosTop] = useState<ProductoTop[]>([])
     const [transacciones, setTransacciones] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -20,7 +20,7 @@ export default function AdminView() {
             setLoading(true)
 
             const { count: usuariosCount } = await supabase
-                .from('Usuarios')
+                .from('usuarios')
                 .select('*', { count: 'exact', head: true })
 
             const { count: entrantesCount } = await supabase
@@ -70,10 +70,12 @@ export default function AdminView() {
             <h2 className="text-2xl font-bold mb-4">Ventory - Panel de Administración</h2>
 
             {/* MÉTRICAS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+
                 <Card className="shadow-sm">
                     <CardHeader>
-                        <CardTitle>Total Usuarios</CardTitle>
+                        <CardTitle>Total de Productos</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-3xl font-bold">{totalUsuarios}</p>
@@ -83,11 +85,11 @@ export default function AdminView() {
 
                 <Card className="shadow-sm">
                     <CardHeader>
-                        <CardTitle>Órdenes Entrantes</CardTitle>
+                        <CardTitle>Total de Almacenes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-3xl font-bold">{ordenesEntrantes}</p>
-                        <p className="text-muted-foreground">Pendientes por procesar</p>
+                        <p className="text-3xl font-bold">{totalUsuarios}</p>
+                        <p className="text-muted-foreground">Registrados en el sistema</p>
                     </CardContent>
                 </Card>
 
@@ -108,6 +110,16 @@ export default function AdminView() {
                     <CardContent>
                         <p className="text-3xl font-bold">{ordenesEntrantes - ordenesCumplidas}</p>
                         <p className="text-muted-foreground">Pendientes por completar</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                    <CardHeader>
+                        <CardTitle>Total de Usuarios</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-3xl font-bold">{ordenesEntrantes}</p>
+                        <p className="text-muted-foreground">Pendientes por procesar</p>
                     </CardContent>
                 </Card>
             </div>
