@@ -67,7 +67,7 @@ export default function LoginPage() {
         >
             <form
                 onSubmit={handleLogin}
-                className="backdrop-blur-md bg-white/20 p-8 rounded-xl shadow-xl w-full max-w-md border border-white/30"
+                className="backdrop-blur-md bg-white/10 p-8 rounded-xl shadow-xl w-full max-w-md border border-white/30"
             >
                 {/* 🔹 Logo superior opcional */}
                 <div className="flex justify-center mb-6">
@@ -85,7 +85,7 @@ export default function LoginPage() {
                 </h2>
 
                 <div className="mb-4">
-                    <Label htmlFor="email" className="text-white">Correo electrónico</Label>
+                    <Label htmlFor="email" className="text-zinc-600">Correo electrónico</Label>
                     <Input
                         type="email"
                         id="email"
@@ -98,7 +98,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="mb-6">
-                    <Label htmlFor="password" className="text-white">Contraseña</Label>
+                    <Label htmlFor="password" className="text-zinc-600">Contraseña</Label>
                     <Input
                         type="password"
                         id="password"
@@ -118,7 +118,7 @@ export default function LoginPage() {
 
                 <Button
                     type="submit"
-                    className="w-full bg-white/30 text-white hover:bg-white/50 backdrop-blur-sm transition"
+                    className="w-full bg-white/30 text-zinc-600 hover:bg-white backdrop-blur-sm transition"
                     disabled={loading}
                 >
                     {loading ? "Ingresando..." : "Iniciar Sesión"}

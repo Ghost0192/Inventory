@@ -39,9 +39,8 @@ export default function Sidebar({ role }: { role: string }) {
 
   const usuariosSubMenu = [
     { href: '/dashboard/usuarios', label: 'Administrar usuarios' },
-    { href: '/dashboard/usuarios/nuevo', label: 'Agregar usuario' },
   ]
-
+  
   // 🔹 Menús base
   let menuItems: any[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
