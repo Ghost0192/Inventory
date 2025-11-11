@@ -119,7 +119,6 @@ export default function UsuariosPage() {
         }
     }
 
-
     // ✏️ Actualizar usuario
     async function handleUpdate() {
         if (!editUser) return
