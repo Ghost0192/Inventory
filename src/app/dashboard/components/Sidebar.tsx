@@ -32,15 +32,17 @@ export default function Sidebar({ role }: { role: string }) {
 
   // 🔹 Submenús
   const inventarioSubMenu = [
+    { href: '/dashboard/inventario/productos', label: 'Administrar Productos' },
     { href: '/dashboard/inventario/ingreso', label: 'Ingreso Inventario' },
-    { href: '/dashboard/inventario/ordenes', label: 'Órdenes Recepcionadas' },
     { href: '/dashboard/inventario/salida', label: 'Salida Inventario' },
+    { href: '/dashboard/inventario/ordenes', label: 'Órdenes Recepcionadas' },
+    { href: '/dashboard/inventario/leer', label: 'Leer productos' },
   ]
 
   const usuariosSubMenu = [
     { href: '/dashboard/usuarios', label: 'Administrar usuarios' },
   ]
-  
+
   // 🔹 Menús base
   let menuItems: any[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

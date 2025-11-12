@@ -1,0 +1,122 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="ERD LUNA" id="LUNA_ERD">
+    <mxGraphModel dx="1213" dy="692" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- a_usuarios -->
+        <mxCell id="usuarios" value="a_usuarios
+PK: auth_uid
+id
+correo
+nombre_completo
+apellido_paterno
+apellido_materno
+telefono
+rol
+sucursal
+activo
+creado_en" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="200" height="250" as="geometry"/>
+        </mxCell>
+
+        <!-- a_productos -->
+        <mxCell id="productos" value="a_productos
+PK: id_prod
+codigo_producto
+nombre_prod
+descripcion_prod
+marca_prod
+origen_prod
+categoria_prod
+id_proveedor
+nombre_proveedor
+unidad_medida
+stock_min
+activo
+sucursal
+auth_uid
+fecha_reg" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="220" height="300" as="geometry"/>
+        </mxCell>
+
+        <!-- a_ingresos -->
+        <mxCell id="ingresos" value="a_ingresos
+PK: id_entr
+fecha_ing
+codigo_producto
+nombre_prod
+unidad_medida
+cantidad_ingreso
+fecha_cad
+nota
+sucursal
+auth_uid
+correo" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="300" width="220" height="250" as="geometry"/>
+        </mxCell>
+
+        <!-- a_salidas -->
+        <mxCell id="salidas" value="a_salidas
+PK: id_salida
+fecha_salida
+codigo_producto
+nombre_prod
+unidad_medida
+cantidad_salida
+nota
+sucursal
+auth_uid
+correo" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="300" width="220" height="250" as="geometry"/>
+        </mxCell>
+
+        <!-- a_zona -->
+        <mxCell id="zona" value="a_zona
+PK: id_zona
+pais
+municipio
+sucursal
+activo
+creado_en" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="200" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- Relaciones -->
+        <mxCell id="rel_usuarios_productos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="usuarios" target="productos">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rel_usuarios_ingresos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="usuarios" target="ingresos">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rel_usuarios_salidas" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="usuarios" target="salidas">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rel_productos_ingresos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="productos" target="ingresos">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rel_productos_salidas" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="productos" target="salidas">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rel_zona_productos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="zona" target="productos">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rel_zona_ingresos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="zona" target="ingresos">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rel_zona_salidas" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="zona" target="salidas">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
