@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
+import { QrScannerModal } from '@/app/dashboard/inventario/productos/components/common/QrScannerModal';
 
 const EjemploUso = () => {
     const [open, setOpen] = useState(false);

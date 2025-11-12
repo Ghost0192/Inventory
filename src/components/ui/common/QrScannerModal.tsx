@@ -4,28 +4,18 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-interface QrScannerModalProps {
-    /** Control externo de apertura */
+interface QRScannerProps {
     open: boolean;
-    /** Función para cerrar el modal */
     onClose: () => void;
-    /** Callback al leer un código correctamente */
-    onResult: (codigo: string) => void;
-    /** Título opcional del modal */
-    title?: string;
+    onScan: (codigo: string) => void;
 }
 
-export const QrScannerModal: React.FC<QrScannerModalProps> = ({
-    open,
-    onClose,
-    onResult,
-    title = 'Escanear código',
-}) => {
+export const QRScanner: React.FC<QRScannerProps> = ({ open, onClose, onScan }) => {
     const scannerRef = useRef<Html5Qrcode | null>(null);
 
     const startScanner = async () => {
-        const waitForElement = (id: string, timeout = 2000): Promise<HTMLElement> => {
-            return new Promise((resolve, reject) => {
+        const waitForElement = (id: string, timeout = 2000): Promise<HTMLElement> =>
+            new Promise((resolve, reject) => {
                 const start = Date.now();
                 const check = () => {
                     const el = document.getElementById(id);
@@ -35,20 +25,18 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
                 };
                 check();
             });
-        };
 
         try {
-            const element = await waitForElement('reader');
-
+            const element = await waitForElement('qr-reader');
             if (!scannerRef.current) {
-                scannerRef.current = new Html5Qrcode('reader');
+                scannerRef.current = new Html5Qrcode('qr-reader');
             }
 
             await scannerRef.current.start(
                 { facingMode: 'environment' },
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    onResult(decodedText);
+                    onScan(decodedText);
                     stopScanner();
                     onClose();
                 },
@@ -65,7 +53,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
                 await scannerRef.current.stop();
                 scannerRef.current.clear();
             } catch {
-                // ya detenido
+                /* nada */
             }
         }
     };
@@ -74,28 +62,17 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
         if (open) startScanner();
         else stopScanner();
 
-        return () => {
-            stopScanner();
-        };
+        return () => stopScanner();
     }, [open]);
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="w-full sm:max-w-[420px] h-[80vh] flex flex-col items-center">
                 <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
+                    <DialogTitle>Escanear código</DialogTitle>
                 </DialogHeader>
-
-                <div
-                    id="reader"
-                    className="w-full flex justify-center border rounded bg-black/5 min-h-[300px]"
-                />
-
-                <Button
-                    type="button"
-                    className="mt-4 bg-gray-500 hover:bg-gray-600 text-white"
-                    onClick={onClose}
-                >
+                <div id="qr-reader" className="w-full flex justify-center border rounded bg-black/5 min-h-[300px]" />
+                <Button onClick={onClose} className="mt-4 bg-gray-500 hover:bg-gray-600 text-white">
                     Cerrar
                 </Button>
             </DialogContent>
