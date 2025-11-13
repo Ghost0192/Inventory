@@ -1,5 +1,11 @@
 export interface Producto {
+
     id_prod: string;
+    fecha_reg: string;
+    auth_uid: string;
+    correo: string;
+    sucursal: string;
+    bodega: string;
     codigo_producto: string;
     nombre_prod: string;
     descripcion_prod?: string;
@@ -10,7 +16,6 @@ export interface Producto {
     nombre_proveedor?: string;
     unidad_medida?: string;
     stock_min?: number;
-    sucursal?: string;
-    bodega?: string;
     activo?: boolean;
+    
 }
