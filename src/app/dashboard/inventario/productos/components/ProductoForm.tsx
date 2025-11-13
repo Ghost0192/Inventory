@@ -1,20 +1,10 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Producto } from '../types';
 import { supabase } from '@/lib/supabaseClient';
-import dynamic from 'next/dynamic';
-
-// 🧠 Shadcn UI Components (ya los tienes en components/ui)
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
-// ⚙️ Carga dinámica del escáner
-const BarcodeScanner = dynamic(() => import('react-qr-barcode-scanner'), { ssr: false });
 
 interface Props {
-    producto?: Producto;
-    onSuccess: () => void;
+    producto?: Producto; // Si viene, será edición
+    onSuccess: () => void; // Callback para refrescar la lista
 }
 
 export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
@@ -37,36 +27,11 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [openScanner, setOpenScanner] = useState(false);
 
-    // Cargar datos si es edición
+    // Si viene un producto, llenar el form
     useEffect(() => {
         if (producto) setForm(producto);
     }, [producto]);
-
-    // Traer nombre automáticamente al escribir código
-    useEffect(() => {
-        const fetchNombre = async () => {
-            if (!form.codigo_producto) return;
-
-            try {
-                const { data, error } = await supabase
-                    .from('a_productos')
-                    .select('nombre_prod')
-                    .eq('codigo_producto', form.codigo_producto)
-                    .single();
-
-                if (error && error.code !== 'PGRST116') throw error;
-                if (data) {
-                    setForm(prev => ({ ...prev, nombre_prod: data.nombre_prod }));
-                }
-            } catch (err: any) {
-                console.error('Error al traer nombre del producto:', err.message);
-            }
-        };
-
-        fetchNombre();
-    }, [form.codigo_producto]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -76,17 +41,6 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         }));
     };
 
-    const handleScan = (result: any) => {
-        if (result?.text) {
-            setForm(prev => ({ ...prev, codigo_producto: result.text }));
-            setOpenScanner(false);
-        }
-    };
-
-    const handleError = (err: any) => {
-        console.error('Error en escáner:', err);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -94,6 +48,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
 
         try {
             if (producto) {
+                // Editar producto
                 const { error } = await supabase
                     .from('a_productos')
                     .update(form)
@@ -101,6 +56,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
 
                 if (error) throw error;
             } else {
+                // Crear producto
                 const { error } = await supabase
                     .from('a_productos')
                     .insert(form);
@@ -108,7 +64,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                 if (error) throw error;
             }
 
-            onSuccess();
+            onSuccess(); // refrescar la lista
             setForm({
                 id_prod: '',
                 codigo_producto: '',
@@ -136,55 +92,18 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded">
             {error && <p className="text-red-500">{error}</p>}
 
-            {/* 🧾 Código con botón escanear */}
             <div>
-                <label className="block font-medium">Código del Producto</label>
-                <div className="flex items-center gap-2">
-                    <Dialog open={openScanner} onOpenChange={setOpenScanner}>
-                        <DialogTrigger asChild>
-                            <Button type="button" className="bg-green-500 hover:bg-green-600 text-white">
-                                📷 Escanear
-                            </Button>
-                        </DialogTrigger>
-
-                        <DialogContent className="sm:max-w-[400px]">
-                            <DialogHeader>
-                                <DialogTitle>Escanear código del producto</DialogTitle>
-                            </DialogHeader>
-
-                            <div className="flex flex-col items-center">
-                                <BarcodeScanner
-                                    width={350}
-                                    height={250}
-                                    onUpdate={(err, result) => {
-                                        if (result) handleScan(result);
-                                        if (err) handleError(err);
-                                    }}
-                                />
-                                <Button
-                                    type="button"
-                                    className="mt-3 bg-gray-400 hover:bg-gray-500 text-white"
-                                    onClick={() => setOpenScanner(false)}
-                                >
-                                    Cerrar
-                                </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-
-                    <input
-                        type="text"
-                        name="codigo_producto"
-                        value={form.codigo_producto}
-                        onChange={handleChange}
-                        required
-                        className="border p-2 flex-1 rounded"
-                        placeholder="Escanear o escribir código"
-                    />
-                </div>
+                <label className="block font-medium">Código</label>
+                <input
+                    type="text"
+                    name="codigo_producto"
+                    value={form.codigo_producto}
+                    onChange={handleChange}
+                    required
+                    className="border p-2 w-full"
+                />
             </div>
 
-            {/* 🏷️ Resto del formulario */}
             <div>
                 <label className="block font-medium">Nombre</label>
                 <input
@@ -193,7 +112,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     value={form.nombre_prod}
                     onChange={handleChange}
                     required
-                    className="border p-2 w-full rounded"
+                    className="border p-2 w-full"
                 />
             </div>
 
@@ -204,7 +123,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     name="categoria_prod"
                     value={form.categoria_prod}
                     onChange={handleChange}
-                    className="border p-2 w-full rounded"
+                    className="border p-2 w-full"
                 />
             </div>
 
@@ -215,7 +134,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     name="unidad_medida"
                     value={form.unidad_medida}
                     onChange={handleChange}
-                    className="border p-2 w-full rounded"
+                    className="border p-2 w-full"
                 />
             </div>
 
@@ -226,28 +145,27 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     name="stock_min"
                     value={form.stock_min}
                     onChange={handleChange}
-                    className="border p-2 w-full rounded"
+                    className="border p-2 w-full"
                     min={0}
                 />
             </div>
 
             <div className="flex space-x-2">
-                <Button
+                <button
                     type="submit"
                     disabled={loading}
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 >
                     {producto ? 'Actualizar' : 'Crear'}
-                </Button>
-
+                </button>
                 {producto && (
-                    <Button
+                    <button
                         type="button"
-                        variant="secondary"
                         onClick={() => onSuccess()}
+                        className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
                     >
                         Cancelar
-                    </Button>
+                    </button>
                 )}
             </div>
         </form>
