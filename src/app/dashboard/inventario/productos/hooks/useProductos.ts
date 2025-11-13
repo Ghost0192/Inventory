@@ -10,7 +10,7 @@ export const useProductos = () => {
     const fetchProductos = async () => {
         setLoading(true);
         const { data, error } = await supabase
-            .from<Producto>('a_productos')
+            .from<Producto, any>('a_productos') // <- aquí agregamos 'any' como segundo genérico
             .select('*')
             .order('nombre_prod', { ascending: true });
 
