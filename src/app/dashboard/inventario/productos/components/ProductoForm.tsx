@@ -24,23 +24,24 @@ interface Props {
     onSuccess: () => void; // Callback para refrescar la lista
 }
 
+
 export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     const [form, setForm] = useState<Producto>({
-        id_prod: "",
-        fecha_reg: "",
-        auth_uid: "",
-        correo: "",
-        sucursal: "",
-        bodega: "",
-        codigo_producto: "",
-        nombre_prod: "",
-        descripcion_prod: "",
-        marca_prod: "",
-        origen_prod: "",
-        categoria_prod: "",
-        id_proveedor: "",
-        nombre_proveedor: "",
-        unidad_medida: "",
+        id_prod: '',
+        fecha_reg: '',
+        auth_uid: '',
+        correo: '',
+        sucursal: '',
+        bodega: '',
+        codigo_producto: '',
+        nombre_prod: '',
+        descripcion_prod: '',
+        marca_prod: '',
+        origen_prod: '',
+        categoria_prod: '',
+        id_proveedor: '',
+        nombre_proveedor: '',
+        unidad_medida: '',
         stock_min: 0,
         activo: true,
     });
@@ -48,17 +49,37 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // 🔥 OBTENER USUARIO LOGUEADO DE SUPABASE
     useEffect(() => {
-        if (producto) setForm(producto);
+        const getUserData = async () => {
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
+
+            if (user) {
+                setForm(prev => ({
+                    ...prev,
+                    auth_uid: user.id,
+                    correo: user.email ?? "",
+                }));
+            }
+        };
+
+        getUserData();
+    }, []);
+
+    // 👇 Si es edición, llenamos el formulario
+    useEffect(() => {
+        if (producto) {
+            setForm(producto);
+        }
     }, [producto]);
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        setForm((prev) => ({
+        setForm(prev => ({
             ...prev,
-            [name]: type === "number" ? Number(value) : value,
+            [name]: type === 'number' ? Number(value) : value
         }));
     };
 
@@ -70,21 +91,20 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         try {
             if (producto) {
                 const { error } = await supabase
-                    .from("a_productos")
+                    .from('a_productos')
                     .update(form)
-                    .eq("id_prod", producto.id_prod);
-
+                    .eq('id_prod', producto.id_prod);
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from("a_productos").insert(form);
+                const { error } = await supabase.from('a_productos').insert(form);
                 if (error) throw error;
             }
 
             onSuccess();
+
         } catch (err: unknown) {
-            const errorMessage =
-                err instanceof Error ? err.message : "Error al guardar el producto";
-            setError(errorMessage);
+            const msg = err instanceof Error ? err.message : 'Error al guardar el producto';
+            setError(msg);
         } finally {
             setLoading(false);
         }

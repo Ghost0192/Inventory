@@ -14,7 +14,7 @@ const ProductosPage = () => {
     if (error) return <p>Error: {error}</p>;
 
     return (
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-6 bg-white rounded-lg shadow">
             <h1 className="text-2xl font-bold mb-4">Administrar Productos</h1>
 
             <ProductoForm
