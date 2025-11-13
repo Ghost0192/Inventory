@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Producto } from '../types';
+import { Producto } from '../types';  // Asegúrate de importar Producto
 import { supabase } from '@/lib/supabaseClient';
 
 export const useProductos = () => {
@@ -9,8 +9,9 @@ export const useProductos = () => {
 
     const fetchProductos = async () => {
         setLoading(true);
+        // Aqui no es necesario usar 'any', solo usa Producto como el tipo de datos
         const { data, error } = await supabase
-            .from<Producto, any>('a_productos') // <- aquí agregamos 'any' como segundo genérico
+            .from('a_productos')
             .select('*')
             .order('nombre_prod', { ascending: true });
 
