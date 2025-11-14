@@ -116,6 +116,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                         correo: form.correo,
                         sucursal: form.sucursal,
                         bodega: form.bodega,
+
                         nombre_prod: form.nombre_prod,
                         descripcion_prod: form.descripcion_prod,
                         marca_prod: form.marca_prod,
@@ -148,6 +149,47 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                
+                {/* ID Producto */}
+                <div>
+                    <Label>ID Producto</Label>
+                    <Input
+                        name="id_prod"
+                        value={form.id_prod}
+                        disabled
+                    />
+                </div>
+
+                {/* Fecha Registro */}
+                <div>
+                    <Label>Fecha Registro</Label>
+                    <Input
+                        name="fecha_reg"
+                        value={form.fecha_reg}
+                        disabled
+                    />
+                </div>
+
+                {/* auth_uid */}
+                <div>
+                    <Label>ID Usuario</Label>
+                    <Input
+                        name="auth_uid"
+                        value={form.auth_uid}
+                        disabled
+                    />
+                </div>
+
+                {/* correo */}
+                <div>
+                    <Label>Correo</Label>
+                    <Input
+                        type="email"
+                        name="correo"
+                        value={form.correo}
+                        disabled
+                    />
+                </div>
 
                 {/* Sucursal */}
                 <div>
@@ -178,6 +220,17 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                         value={form.bodega}
                         onChange={handleChange}
                         required
+                    />
+                </div>
+
+                {/* código */}
+                <div>
+                    <Label>Código Producto</Label>
+                    <Input
+                        name="codigo_producto"
+                        value={form.codigo_producto}
+                        onChange={handleChange}
+                        
                     />
                 </div>
 
@@ -264,6 +317,16 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                             <SelectItem value="Insumo">Insumo</SelectItem>
                         </SelectContent>
                     </Select>
+                </div>
+
+                {/* ID proveedor (siempre null) */}
+                <div>
+                    <Label>ID Proveedor</Label>
+                    <Input
+                        name="id_proveedor"
+                        value="null"
+                        disabled
+                    />
                 </div>
 
                 {/* Nombre proveedor */}

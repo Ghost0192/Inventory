@@ -124,7 +124,7 @@ export default function Sidebar({ role }: { role: string }) {
             height={40}
             className="rounded-md"
           />
-          <h1 className="text-3xl font-bold text-green-900">Ventory</h1>
+          <h1 className="text-3xl font-bold text-green-900">Inventory</h1>
         </div>
 
         {/* Info panel */}
