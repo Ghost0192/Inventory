@@ -131,6 +131,8 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                 if (error) throw error;
             }
 
+            // show success notification
+            alert(`Producto ${producto ? "actualizado" : "creado"} exitosamente`);
             onSuccess();
 
         } catch (err) {

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react"; // ícono de orden (shadcn usa lucide)
+import { QRButton } from "@/components/ui/common/QRButton";
 
 interface Props {
     productos: Producto[];
@@ -122,6 +123,7 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                                 { key: "categoria_prod", label: "Categoría" },
                                 { key: "nombre_proveedor", label: "Proveedor" },
                                 { key: "stock_min", label: "Stock Mínimo" },
+
                             ].map((col) => (
                                 <TableHead
                                     key={col.key}
@@ -133,16 +135,18 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                                         <ArrowUpDown
                                             size={14}
                                             className={`transition-transform ${sortColumn === col.key
-                                                    ? sortOrder === "asc"
-                                                        ? "rotate-180 text-blue-500"
-                                                        : "text-blue-500"
-                                                    : "text-gray-400"
+                                                ? sortOrder === "asc"
+                                                    ? "rotate-180 text-blue-500"
+                                                    : "text-blue-500"
+                                                : "text-gray-400"
                                                 }`}
                                         />
                                     </div>
+
                                 </TableHead>
                             ))}
                             <TableHead>Estatus</TableHead>
+                            <TableHead>QR</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -161,12 +165,15 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                                     <TableCell>
                                         <span
                                             className={`px-2 py-1 rounded text-xs font-semibold ${p.activo
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-red-100 text-red-700"
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-red-100 text-red-700"
                                                 }`}
                                         >
                                             {p.activo ? "Activo" : "Inactivo"}
                                         </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <QRButton codigo={p.codigo_producto ?? ""} nombre={p.nombre_prod ?? ""} />
                                     </TableCell>
                                 </TableRow>
                             ))
