@@ -11,45 +11,59 @@ interface Props {
 }
 
 export const QRButton: React.FC<Props> = ({ codigo, nombre }) => {
-
     const handlePrintQR = async () => {
         try {
-            // 1️⃣ Generamos QR como imagen DataURL
+            // Generamos el QR como DataURL
             const qrDataUrl = await QRCode.toDataURL(codigo, {
                 margin: 2,
                 width: 300,
             });
 
-            // 2️⃣ Nueva ventana para imprimir
+            // Abrimos una nueva ventana para imprimir
             const printWindow = window.open("", "_blank");
             if (!printWindow) return;
 
             printWindow.document.write(`
-                <html>
-                <head>
-                    <title>QR - ${codigo}</title>
-                </head>
-                <body style="font-family: Arial; display:flex; flex-direction:column; align-items:center; justify-content:center; padding-top:40px;">
-                    
-                    <img src="${qrDataUrl}" style="width:300px; margin-bottom:20px;" />
-
-                    <div style="text-align:center; font-size:20px; font-weight:bold; margin-bottom:5px;">
-                        ${codigo}
-                    </div>
-
-                    <div style="text-align:center; font-size:18px;">
-                        ${nombre}
-                    </div>
-
-                    <script>
-                        window.onload = () => { window.print(); };
-                    </script>
-                </body>
-                </html>
-            `);
+            <html>
+            <head>
+                <title>QR - ${codigo}</title>
+                <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding-top: 40px;
+                }
+                img {
+                    width: 300px;
+                    margin-bottom: 20px;
+                }
+                .codigo {
+                    text-align: center;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                .nombre {
+                    text-align: center;
+                    font-size: 18px;
+                }
+                </style>
+            </head>
+            <body>
+                <img src="${qrDataUrl}" />
+                <div class="codigo">${codigo}</div>
+                <div class="nombre">${nombre}</div>
+                <script>
+                window.onload = () => { window.print(); };
+                </script>
+            </body>
+            </html>
+        `);
 
             printWindow.document.close();
-
         } catch (error) {
             console.error("Error generando QR:", error);
         }
