@@ -33,9 +33,6 @@ export default function Sidebar({ role }: { role: string }) {
   // 🔹 Submenús
   const inventarioSubMenu = [
     { href: '/dashboard/inventario/productos', label: 'Administrar Productos' },
-    { href: '/dashboard/inventario/ingreso', label: 'Ingreso Inventario' },
-    { href: '/dashboard/inventario/salida', label: 'Salida Inventario' },
-    { href: '/dashboard/inventario/ordenes', label: 'Órdenes Recepcionadas' },
     { href: '/dashboard/inventario/leer', label: 'Leer productos' },
   ]
 
