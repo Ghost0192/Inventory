@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react"; // ícono de orden (shadcn usa lucide)
-import { QRButton } from "@/components/ui/common/QRButton";
+
+import { QRCreate } from "@/components/ui/common/QRCreate";
 
 interface Props {
     productos: Producto[];
@@ -173,7 +174,7 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <QRButton codigo={p.codigo_producto ?? ""} nombre={p.nombre_prod ?? ""} />
+                                        <QRCreate codigo={p.codigo_producto ?? ""} nombre={p.nombre_prod ?? ""} />
                                     </TableCell>
                                 </TableRow>
                             ))

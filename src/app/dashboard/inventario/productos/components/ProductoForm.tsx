@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Producto } from "../types";
+import { ProductoInsert } from "../types";
 import { supabase } from "@/lib/supabaseClient";
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -13,35 +14,28 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    RadioGroup,
-    RadioGroupItem,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
+import { SuccessModal } from "@/components/ui/common/SuccessModal";
+
 interface Props {
-    producto?: Producto; // Si viene, será edición
-    onSuccess: () => void; // Callback para refrescar la lista
+    onSuccess: () => void;
 }
 
-
-export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
-    const [form, setForm] = useState<Producto>({
-        id_prod: '',
-        fecha_reg: '',
-        auth_uid: '',
-        correo: '',
-        sucursal: '',
-        bodega: '',
-        codigo_producto: '',
-        nombre_prod: '',
-        descripcion_prod: '',
-        marca_prod: '',
-        origen_prod: '',
-        categoria_prod: '',
-        id_proveedor: '',
-        nombre_proveedor: '',
-        unidad_medida: '',
+export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
+    const [form, setForm] = useState<ProductoInsert>({
+        auth_uid: "",
+        correo: "",
+        sucursal: "",
+        bodega: "",
+        nombre_prod: "",
+        descripcion_prod: "",
+        marca_prod: "",
+        origen_prod: "",
+        categoria_prod: "",
+        nombre_proveedor: "",
+        unidad_medida: "",
         stock_min: 0,
         activo: true,
     });
@@ -49,305 +43,295 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // 🔥 OBTENER USUARIO LOGUEADO DE SUPABASE
+    // Modal
+    const [showSuccess, setShowSuccess] = useState(false);
+
+    // Guardar mensaje dinámico
+    const [modalMessage, setModalMessage] = useState("");
+
+    // Obtener usuario logueado
     useEffect(() => {
         const getUserData = async () => {
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
-
+            const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 setForm(prev => ({
                     ...prev,
                     auth_uid: user.id,
-                    correo: user.email ?? "",
+                    correo: user.email || "",
                 }));
             }
         };
-
         getUserData();
     }, []);
 
-    // 👇 Si es edición, llenamos el formulario
-    useEffect(() => {
-        if (producto) {
-            setForm(producto);
-        }
-    }, [producto]);
+    // Construir payload limpio
+    const buildInsertPayload = () => ({
+        auth_uid: form.auth_uid,
+        correo: form.correo,
+        sucursal: form.sucursal,
+        bodega: form.bodega,
+        nombre_prod: form.nombre_prod,
+        descripcion_prod: form.descripcion_prod,
+        marca_prod: form.marca_prod,
+        origen_prod: form.origen_prod,
+        categoria_prod: form.categoria_prod,
+        nombre_proveedor: form.nombre_proveedor,
+        unidad_medida: form.unidad_medida,
+        stock_min: form.stock_min,
+        activo: form.activo,
+    });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value, type } = e.target;
-        setForm(prev => ({
-            ...prev,
-            [name]: type === 'number' ? Number(value) : value
-        }));
-    };
-
+    // Submit
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            if (producto) {
-                const { error } = await supabase
-                    .from('a_productos')
-                    .update(form)
-                    .eq('id_prod', producto.id_prod);
-                if (error) throw error;
-            } else {
-                const { error } = await supabase.from('a_productos').insert(form);
-                if (error) throw error;
-            }
+            const payload = buildInsertPayload();
+            const { error } = await supabase.from("a_productos").insert(payload);
 
-            // show success notification
-            alert(`Producto ${producto ? "actualizado" : "creado"} exitosamente`);
-            onSuccess();
+            if (error) throw error;
+
+            // Guardamos mensaje y mostramos modal
+            setModalMessage("El producto fue creado correctamente.");
+            setShowSuccess(true);
 
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Error al guardar el producto';
+            const msg =
+                err instanceof Error ? err.message : "Error al guardar el producto";
             setError(msg);
         } finally {
             setLoading(false);
         }
     };
 
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value, type } = e.target;
+        setForm(prev => ({
+            ...prev,
+            [name]: type === "number" ? Number(value) : value,
+        }));
+    };
+
+    // Función que cierra modal y llama al padre
+    const handleModalClose = () => {
+        setShowSuccess(false);
+        onSuccess();
+    };
+
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="space-y-6 p-6 border rounded-md bg-white shadow-sm"
-        >
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+        <>
+            {/* Modal de confirmación */}
+            <SuccessModal
+                open={showSuccess}
+                onClose={handleModalClose}
+                message={modalMessage}
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label>ID Producto</Label>
-                    <Input
-                        name="id_prod"
-                        value={form.id_prod}
-                        onChange={handleChange}
-                        placeholder="Ej. PROD-001"
-                        required
-                    />
-                </div>
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-6 p-6 border rounded-md bg-white shadow-sm"
+            >
+                {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                <div>
-                    <Label>Fecha Registro</Label>
-                    <Input
-                        type="date"
-                        name="fecha_reg"
-                        value={form.fecha_reg}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <Label>ID Usuario</Label>
+                        <Input value={form.auth_uid} disabled />
+                    </div>
 
-                <div>
-                    <Label>ID Usuario</Label>
-                    <Input
-                        name="auth_uid"
-                        value={form.auth_uid}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                    <div>
+                        <Label>Correo</Label>
+                        <Input value={form.correo} disabled />
+                    </div>
 
-                <div>
-                    <Label>Correo</Label>
-                    <Input
-                        type="email"
-                        name="correo"
-                        value={form.correo}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                    <div>
+                        <Label>Sucursal</Label>
+                        <Select
+                            value={form.sucursal}
+                            onValueChange={(val) => setForm({ ...form, sucursal: val })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una sucursal" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Hijuelas">Hijuelas</SelectItem>
+                                <SelectItem value="Osorno">Osorno</SelectItem>
+                                <SelectItem value="Ica">Ica</SelectItem>
+                                <SelectItem value="Queretaro">Querétaro</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                {/* Sucursal */}
-                <div>
-                    <Label>Sucursal</Label>
-                    <Select
-                        value={form.sucursal}
-                        onValueChange={(val) => setForm({ ...form, sucursal: val })}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una sucursal" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Hijuelas">Hijuelas</SelectItem>
-                            <SelectItem value="Osorno">Osorno</SelectItem>
-                            <SelectItem value="Ica">Ica</SelectItem>
-                            <SelectItem value="Queretaro">Queretaro</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                    <div>
+                        <Label>Bodega</Label>
+                        <Select
+                            value={form.bodega}
+                            onValueChange={(val) => setForm({ ...form, bodega: val })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una bodega" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Invitro Lab">Invitro Lab</SelectItem>
+                                <SelectItem value="Bodega 1">Bodega 1</SelectItem>
+                                <SelectItem value="Bodega 2">Bodega 2</SelectItem>
+                                <SelectItem value="Bodega 3">Bodega 3</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                <div>
-                    <Label>Bodega</Label>
-                    <Input
-                        name="bodega"
-                        value={form.bodega}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                    <div>
+                        <Label>Nombre Producto</Label>
+                        <Input
+                            name="nombre_prod"
+                            value={form.nombre_prod}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
 
-                <div>
-                    <Label>Código Producto</Label>
-                    <Input
-                        name="codigo_producto"
-                        value={form.codigo_producto}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                    <div className="md:col-span-2">
+                        <Label>Descripción</Label>
+                        <Textarea
+                            name="descripcion_prod"
+                            value={form.descripcion_prod}
+                            onChange={handleChange}
+                            rows={3}
+                        />
+                    </div>
 
-                <div>
-                    <Label>Nombre Producto</Label>
-                    <Input
-                        name="nombre_prod"
-                        value={form.nombre_prod}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                    <div>
+                        <Label>Marca</Label>
+                        <Select
+                            value={form.marca_prod}
+                            onValueChange={(val) => setForm({ ...form, marca_prod: val })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una marca" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Genérico">Genérico</SelectItem>
+                                <SelectItem value="Líder">Líder</SelectItem>
+                                <SelectItem value="Protec">Protec</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                <div className="md:col-span-2">
-                    <Label>Descripción</Label>
-                    <Textarea
-                        name="descripcion_prod"
-                        value={form.descripcion_prod}
-                        onChange={handleChange}
-                        rows={3}
-                    />
-                </div>
-
-                {/* Marca */}
-                <div>
-                    <Label>Marca</Label>
-                    <Select
-                        value={form.marca_prod}
-                        onValueChange={(val) => setForm({ ...form, marca_prod: val })}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una marca" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Generico">Genérico</SelectItem>
-                            <SelectItem value="Lider">Líder</SelectItem>
-                            <SelectItem value="Protec">Protec</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Origen */}
-                <div>
-                    <Label>Origen</Label>
-                    <RadioGroup
-                        value={form.origen_prod}
-                        onValueChange={(val) => setForm({ ...form, origen_prod: val })}
-                    >
-                        <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Nacional" id="nacional" />
-                                <Label htmlFor="nacional">Nacional</Label>
+                    <div>
+                        <Label>Origen</Label>
+                        <RadioGroup
+                            value={form.origen_prod}
+                            onValueChange={(val) => setForm({ ...form, origen_prod: val })}
+                        >
+                            <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="Nacional" id="nacional" />
+                                    <Label htmlFor="nacional">Nacional</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="Internacional" id="internacional" />
+                                    <Label htmlFor="internacional">Internacional</Label>
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Internacional" id="internacional" />
-                                <Label htmlFor="internacional">Internacional</Label>
-                            </div>
-                        </div>
-                    </RadioGroup>
+                        </RadioGroup>
+                    </div>
+
+                    <div>
+                        <Label>Categoría</Label>
+                        <Select
+                            value={form.categoria_prod}
+                            onValueChange={(val) => setForm({ ...form, categoria_prod: val })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Contenedor">Contenedor</SelectItem>
+                                <SelectItem value="Agroquimico">Agroquímico</SelectItem>
+                                <SelectItem value="Fertilizante">Fertilizante</SelectItem>
+                                <SelectItem value="Fungicida">Fungicida</SelectItem>
+                                <SelectItem value="Insumo">Insumo</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <Label>Nombre Proveedor</Label>
+                        <Input
+                            name="nombre_proveedor"
+                            value={form.nombre_proveedor}
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    <div>
+                        <Label>Unidad de Medida</Label>
+                        <Select
+                            value={form.unidad_medida}
+                            onValueChange={(val) => setForm({ ...form, unidad_medida: val })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona unidad" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Unidad">Unidad</SelectItem>
+                                <SelectItem value="Kilogramos">Kilogramos</SelectItem>
+                                <SelectItem value="Litros">Litros</SelectItem>
+                                <SelectItem value="Gramos">Gramos</SelectItem>
+                                <SelectItem value="Mililitros">Mililitros</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <Label>Stock Mínimo</Label>
+                        <Input
+                            type="number"
+                            name="stock_min"
+                            value={form.stock_min}
+                            onChange={handleChange}
+                        />
+                    </div>
                 </div>
 
-                {/* Categoría */}
-                <div>
-                    <Label>Categoría</Label>
-                    <Select
-                        value={form.categoria_prod}
-                        onValueChange={(val) =>
-                            setForm({ ...form, categoria_prod: val })
-                        }
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Contenedor">Contenedor</SelectItem>
-                            <SelectItem value="Agroquimico">Agroquímico</SelectItem>
-                            <SelectItem value="Fertilizante">Fertilizante</SelectItem>
-                            <SelectItem value="Fungicida">Fungicida</SelectItem>
-                            <SelectItem value="Insumo">Insumo</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div>
-                    <Label>ID Proveedor</Label>
-                    <Input
-                        name="id_proveedor"
-                        value={form.id_proveedor}
-                        onChange={handleChange}
-                    />
-                </div>
-
-                <div>
-                    <Label>Nombre Proveedor</Label>
-                    <Input
-                        name="nombre_proveedor"
-                        value={form.nombre_proveedor}
-                        onChange={handleChange}
-                    />
-                </div>
-
-                {/* Unidad de Medida */}
-                <div>
-                    <Label>Unidad de Medida</Label>
-                    <Select
-                        value={form.unidad_medida}
-                        onValueChange={(val) =>
-                            setForm({ ...form, unidad_medida: val })
-                        }
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecciona unidad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Unidad">Unidad</SelectItem>
-                            <SelectItem value="Kilogramos">Kilogramos</SelectItem>
-                            <SelectItem value="Litros">Litros</SelectItem>
-                            <SelectItem value="Gramos">Gramos</SelectItem>
-                            <SelectItem value="Mililitros">Mililitros</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div>
-                    <Label>Stock Mínimo</Label>
-                    <Input
-                        type="number"
-                        name="stock_min"
-                        value={form.stock_min}
-                        onChange={handleChange}
-                    />
-                </div>
-            </div>
-
-            {/* Botones */}
-            <div className="flex justify-end space-x-3">
-                <Button type="submit" disabled={loading}>
-                    {producto ? "Actualizar" : "Crear"}
-                </Button>
-                {producto && (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => onSuccess()}
-                    >
-                        Cancelar
+                {/* Botón de crear */}
+                <div className="flex justify-end">
+                    <Button type="submit" disabled={loading}>
+                        {loading ? (
+                            <span className="flex items-center gap-2">
+                                <svg
+                                    className="animate-spin h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    ></path>
+                                </svg>
+                                Guardando...
+                            </span>
+                        ) : (
+                            "Crear Producto"
+                        )}
                     </Button>
-                )}
-            </div>
-        </form>
+                </div>
+
+            </form>
+        </>
     );
 };

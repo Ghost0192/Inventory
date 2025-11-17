@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
 
-const EjemploUso = () => {
+const LeerQR = () => {
     const [open, setOpen] = useState(false);
     const [codigo, setCodigo] = useState('');
 
@@ -42,4 +42,4 @@ const EjemploUso = () => {
     );
 };
 
-export default EjemploUso;
+export default LeerQR;

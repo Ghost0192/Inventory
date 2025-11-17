@@ -10,7 +10,7 @@ interface Props {
     nombre: string;
 }
 
-export const QRButton: React.FC<Props> = ({ codigo, nombre }) => {
+export const QRCreate: React.FC<Props> = ({ codigo, nombre }) => {
     const handlePrintQR = async () => {
         try {
             // Generamos el QR como DataURL
