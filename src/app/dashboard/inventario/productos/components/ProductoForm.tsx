@@ -20,27 +20,28 @@ import {
 import { Label } from "@/components/ui/label";
 
 interface Props {
-    producto?: Producto; 
-    onSuccess: () => void; 
+    producto?: Producto; // Si viene, será edición
+    onSuccess: () => void; // Callback para refrescar la lista
 }
+
 
 export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     const [form, setForm] = useState<Producto>({
-        id_prod: "",
-        fecha_reg: "",
-        auth_uid: "",
-        correo: "",
-        sucursal: "",
-        bodega: "",
-        codigo_producto: "",
-        nombre_prod: "",
-        descripcion_prod: "",
-        marca_prod: "",
-        origen_prod: "",
-        categoria_prod: "",
-        id_proveedor: "",
-        nombre_proveedor: "",
-        unidad_medida: "",
+        id_prod: '',
+        fecha_reg: '',
+        auth_uid: '',
+        correo: '',
+        sucursal: '',
+        bodega: '',
+        codigo_producto: '',
+        nombre_prod: '',
+        descripcion_prod: '',
+        marca_prod: '',
+        origen_prod: '',
+        categoria_prod: '',
+        id_proveedor: '',
+        nombre_proveedor: '',
+        unidad_medida: '',
         stock_min: 0,
         activo: true,
     });
@@ -48,10 +49,13 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // 🔥 Obtener usuario logueado
+    // 🔥 OBTENER USUARIO LOGUEADO DE SUPABASE
     useEffect(() => {
         const getUserData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
+
             if (user) {
                 setForm(prev => ({
                     ...prev,
@@ -60,21 +64,22 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                 }));
             }
         };
+
         getUserData();
     }, []);
 
-    // Si es edición
+    // 👇 Si es edición, llenamos el formulario
     useEffect(() => {
-        if (producto) setForm(producto);
+        if (producto) {
+            setForm(producto);
+        }
     }, [producto]);
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-        const { name, value } = e.target;
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
         setForm(prev => ({
             ...prev,
-            [name]: value,
+            [name]: type === 'number' ? Number(value) : value
         }));
     };
 
@@ -85,49 +90,13 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
 
         try {
             if (producto) {
-                // 🔵 UPDATE
                 const { error } = await supabase
-                    .from("a_productos")
-                    .update({
-                        sucursal: form.sucursal,
-                        bodega: form.bodega,
-                        codigo_producto: null,
-                        nombre_prod: form.nombre_prod,
-                        descripcion_prod: form.descripcion_prod,
-                        marca_prod: form.marca_prod,
-                        origen_prod: form.origen_prod,
-                        categoria_prod: form.categoria_prod,
-                        id_proveedor: null,
-                        nombre_proveedor: form.nombre_proveedor,
-                        unidad_medida: form.unidad_medida,
-                        stock_min: form.stock_min,
-                        activo: form.activo,
-                    })
-                    .eq("id_prod", producto.id_prod);
-
+                    .from('a_productos')
+                    .update(form)
+                    .eq('id_prod', producto.id_prod);
                 if (error) throw error;
-
             } else {
-                // 🟢 INSERT
-                const { error } = await supabase
-                    .from("a_productos")
-                    .insert({
-                        auth_uid: form.auth_uid,
-                        correo: form.correo,
-                        sucursal: form.sucursal,
-                        bodega: form.bodega,
-                        nombre_prod: form.nombre_prod,
-                        descripcion_prod: form.descripcion_prod,
-                        marca_prod: form.marca_prod,
-                        origen_prod: form.origen_prod,
-                        categoria_prod: form.categoria_prod,
-                        id_proveedor: null,
-                        nombre_proveedor: form.nombre_proveedor,
-                        unidad_medida: form.unidad_medida,
-                        stock_min: form.stock_min,
-                        activo: form.activo,
-                    });
-
+                const { error } = await supabase.from('a_productos').insert(form);
                 if (error) throw error;
             }
 
@@ -135,8 +104,9 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
             alert(`Producto ${producto ? "actualizado" : "creado"} exitosamente`);
             onSuccess();
 
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Error al guardar");
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Error al guardar el producto';
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -149,16 +119,56 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         >
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <Label>ID Producto</Label>
+                    <Input
+                        name="id_prod"
+                        value={form.id_prod}
+                        onChange={handleChange}
+                        placeholder="Ej. PROD-001"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <Label>Fecha Registro</Label>
+                    <Input
+                        type="date"
+                        name="fecha_reg"
+                        value={form.fecha_reg}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+
+                <div>
+                    <Label>ID Usuario</Label>
+                    <Input
+                        name="auth_uid"
+                        value={form.auth_uid}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+
+                <div>
+                    <Label>Correo</Label>
+                    <Input
+                        type="email"
+                        name="correo"
+                        value={form.correo}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
 
                 {/* Sucursal */}
                 <div>
                     <Label>Sucursal</Label>
                     <Select
                         value={form.sucursal}
-                        onValueChange={(val) =>
-                            setForm({ ...form, sucursal: val })
-                        }
+                        onValueChange={(val) => setForm({ ...form, sucursal: val })}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Selecciona una sucursal" />
@@ -172,7 +182,6 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     </Select>
                 </div>
 
-                {/* bodega */}
                 <div>
                     <Label>Bodega</Label>
                     <Input
@@ -183,7 +192,16 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     />
                 </div>
 
-                {/* nombre */}
+                <div>
+                    <Label>Código Producto</Label>
+                    <Input
+                        name="codigo_producto"
+                        value={form.codigo_producto}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+
                 <div>
                     <Label>Nombre Producto</Label>
                     <Input
@@ -194,13 +212,13 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     />
                 </div>
 
-                {/* descripción */}
                 <div className="md:col-span-2">
                     <Label>Descripción</Label>
                     <Textarea
                         name="descripcion_prod"
                         value={form.descripcion_prod}
                         onChange={handleChange}
+                        rows={3}
                     />
                 </div>
 
@@ -209,9 +227,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     <Label>Marca</Label>
                     <Select
                         value={form.marca_prod}
-                        onValueChange={(val) =>
-                            setForm({ ...form, marca_prod: val })
-                        }
+                        onValueChange={(val) => setForm({ ...form, marca_prod: val })}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Selecciona una marca" />
@@ -229,11 +245,9 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     <Label>Origen</Label>
                     <RadioGroup
                         value={form.origen_prod}
-                        onValueChange={(val) =>
-                            setForm({ ...form, origen_prod: val })
-                        }
+                        onValueChange={(val) => setForm({ ...form, origen_prod: val })}
                     >
-                        <div className="flex space-x-4">
+                        <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="Nacional" id="nacional" />
                                 <Label htmlFor="nacional">Nacional</Label>
@@ -268,7 +282,15 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     </Select>
                 </div>
 
-                {/* Nombre proveedor */}
+                <div>
+                    <Label>ID Proveedor</Label>
+                    <Input
+                        name="id_proveedor"
+                        value={form.id_proveedor}
+                        onChange={handleChange}
+                    />
+                </div>
+
                 <div>
                     <Label>Nombre Proveedor</Label>
                     <Input
@@ -278,7 +300,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     />
                 </div>
 
-                {/* Unidad de medida */}
+                {/* Unidad de Medida */}
                 <div>
                     <Label>Unidad de Medida</Label>
                     <Select
@@ -300,7 +322,6 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                     </Select>
                 </div>
 
-                {/* Stock mínimo */}
                 <div>
                     <Label>Stock Mínimo</Label>
                     <Input
@@ -317,12 +338,11 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                 <Button type="submit" disabled={loading}>
                     {producto ? "Actualizar" : "Crear"}
                 </Button>
-
                 {producto && (
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={onSuccess}
+                        onClick={() => onSuccess()}
                     >
                         Cancelar
                     </Button>

@@ -156,7 +156,7 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                                 <TableRow key={p.id_prod}>
                                     <TableCell>{p.id_prod}</TableCell>
                                     <TableCell>{p.fecha_reg}</TableCell>
-                                    <TableCell className="bg-green-100 text-green-700">{p.codigo_producto}</TableCell>
+                                    <TableCell>{p.codigo_producto}</TableCell>
                                     <TableCell>{p.nombre_prod}</TableCell>
                                     <TableCell>{p.marca_prod}</TableCell>
                                     <TableCell>{p.categoria_prod}</TableCell>
