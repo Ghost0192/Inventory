@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProductoInsert } from "../types";
+import { Producto, ProductoInsert } from "../types";
 import { supabase } from "@/lib/supabaseClient";
 
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 
 interface Props {
+    producto?: Producto;  // <-- agregado
     onSuccess: () => void;
 }
 

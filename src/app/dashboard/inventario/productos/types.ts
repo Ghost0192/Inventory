@@ -1,4 +1,4 @@
-// Datos completos que vienen desde la BD
+// Read Tabla Productos desde la BD
 export interface Producto {
     id_prod: string;
     fecha_reg: string;
