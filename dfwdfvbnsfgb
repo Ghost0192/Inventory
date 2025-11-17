@@ -1,0 +1,24 @@
+[33mbe2d30a[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: enhance QRButton component with improved printing layout and styles; add TypeScript definitions for qrcode module
+[33m74c9211[m feat: add TypeScript definitions for qrcode package in package.json and package-lock.json
+[33m66bd94c[m feat: add QRButton component for generating and printing QR codes in ProductoTable
+[33m448eb8a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m feat: update sidebar title and enhance ProductoForm with user data handling and improved styling in ProductoTable
+[33m94aedd3[m feat: enhance ProductoForm with user data retrieval and improve styling on ProductosPage
+[33m0250bc1[m feat: update product form and table with new fields, filtering, sorting, and pagination
+[33mf3b4f52[m feat: implement login page with session management and authentication
+[33me8cf72c[m refactor: update import path for Producto type and clean up comments in useProductos hook
+[33m876a7ad[m refactor: clean up type usage in useProductos hook
+[33ma5b36d9[m error
+[33mbbce8ba[m refactor: remove QR scanner component and clean up product form logic
+[33m17b08bf[m se arreglo el qrscanner
+[33m24b1773[m refactor: reorganize QR scanner components and update import paths
+[33mea1f376[m feat: add QR code scanning functionality and enhance product management
+[33m0b58e68[m refactor: optimize code structure and enhance performance across multiple components
+[33mde1cfa4[m refactor: restructure user management components and logic
+[33mc140069[m refactor: remove unnecessary blank line before the update user function in UsuariosPage component
+[33mb90cde1[m feat: implement user management features including user creation, editing, deletion, and search functionality; enhance user interface components for better usability
+[33m1fd53de[m refactor: improve code structure and enhance user feedback in the UsuariosPage component
+[33m50e30cb[m feat: update user profile handling and improve session management; refactor user-related components for better data structure
+[33m3073558[m Refactor code structure for improved readability and maintainability
+[33m60c314c[m feat: add new pages for ingresos, ordenes, and salidas; implement UI components for accordion, calendar, chart, dialog, select, and table; create ingreso service for CRUD operations
+[33m7ae254b[m feat: add dashboard and login functionality with role-based views
+[33me6f3609[m Initial commit from Create Next App
