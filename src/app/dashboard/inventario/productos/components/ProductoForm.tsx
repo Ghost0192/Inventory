@@ -167,7 +167,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                         </Select>
                     </div>
 
-                    <div>
+                    <div className="col-span-1">
                         <Label>Bodega</Label>
                         <Select
                             value={form.bodega}
@@ -205,13 +205,13 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                         />
                     </div>
 
-                    <div>
+                    <div className="col-span-1">
                         <Label>Marca</Label>
                         <Select
                             value={form.marca_prod}
                             onValueChange={(val) => setForm({ ...form, marca_prod: val })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una marca" />
                             </SelectTrigger>
                             <SelectContent>
@@ -241,13 +241,13 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                         </RadioGroup>
                     </div>
 
-                    <div>
+                    <div className="col-span-1">
                         <Label>Categoría</Label>
                         <Select
                             value={form.categoria_prod}
                             onValueChange={(val) => setForm({ ...form, categoria_prod: val })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una categoría" />
                             </SelectTrigger>
                             <SelectContent>
