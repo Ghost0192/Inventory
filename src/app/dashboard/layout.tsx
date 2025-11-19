@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import Sidebar from './components/Sidebar'
-import Header from './components/Header'
+//import Header from './components/Header'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter()
