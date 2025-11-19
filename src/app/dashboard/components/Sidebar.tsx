@@ -166,6 +166,7 @@ export default function Sidebar({ role, nombreCompleto, correo }: SidebarProps) 
             <span className="font-semibold text-gray-800">{nombreCompleto}</span>
           </div>
           <p className="text-sm text-gray-500 truncate">{correo}</p>
+          <p className="text-sm text-gray-500 truncate">{role}</p>
         </div>
 
         {/* Menú principal */}
