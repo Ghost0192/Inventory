@@ -45,10 +45,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="flex h-screen bg-gray-50">
-            <Sidebar role={perfil!.rol} />
+            <Sidebar role={perfil!.rol} nombreCompleto={perfil!.nombre} correo={perfil!.correo}/>
             <div className="flex flex-col flex-1">
-                {/* 👇 Aquí pasamos nombre completo y correo */}
-                <Header nombreCompleto={perfil!.nombre} correo={perfil!.correo} />
+                {/* 👇 Aquí pasamos nombre completo y correo 
+                <Header nombreCompleto={perfil!.nombre} correo={perfil!.correo} />*/}
 
                 <main className="flex-1 overflow-y-auto p-6">
                     {children}

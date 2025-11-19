@@ -149,13 +149,13 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Input value={form.correo} disabled />
                     </div>
 
-                    <div>
+                    <div className="col-span-1">
                         <Label>Sucursal</Label>
                         <Select
                             value={form.sucursal}
                             onValueChange={(val) => setForm({ ...form, sucursal: val })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una sucursal" />
                             </SelectTrigger>
                             <SelectContent>
@@ -173,7 +173,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                             value={form.bodega}
                             onValueChange={(val) => setForm({ ...form, bodega: val })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una bodega" />
                             </SelectTrigger>
                             <SelectContent>
@@ -228,7 +228,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                             value={form.origen_prod}
                             onValueChange={(val) => setForm({ ...form, origen_prod: val })}
                         >
-                            <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-4 my-2">
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="Nacional" id="nacional" />
                                     <Label htmlFor="nacional">Nacional</Label>
@@ -275,7 +275,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                             value={form.unidad_medida}
                             onValueChange={(val) => setForm({ ...form, unidad_medida: val })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona unidad" />
                             </SelectTrigger>
                             <SelectContent>

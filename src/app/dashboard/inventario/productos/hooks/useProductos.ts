@@ -1,4 +1,3 @@
-// src/app/dashboard/inventario/productos/hooks/useProductos.ts
 import { useState, useEffect } from 'react';
 import { Producto } from '../types';  // Ajusta la ruta según la ubicación real del archivo
 import { supabase } from '@/lib/supabaseClient';

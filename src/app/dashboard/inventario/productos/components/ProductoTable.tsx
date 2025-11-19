@@ -111,7 +111,7 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
             </div>
 
             {/* 🧾 Tabla principal */}
-            <div className="rounded-md border">
+            <div className="rounded-md border ">
                 <Table>
                     <TableHeader>
                         <TableRow>
