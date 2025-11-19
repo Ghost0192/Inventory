@@ -134,11 +134,10 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                                         {col.label}
                                         <ArrowUpDown
                                             size={14}
-                                            className={`transition-transform ${
-                                                sortColumn === col.key
+                                            className={`transition-transform ${sortColumn === col.key
                                                     ? "text-blue-500"
                                                     : "text-gray-400"
-                                            }`}
+                                                }`}
                                         />
                                     </div>
                                 </TableHead>
@@ -161,8 +160,8 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                                     <TableCell>{i.fecha_cad}</TableCell>
                                     <TableCell>
                                         <QRCreate
-                                            codigo={i.codigo_producto}
-                                            nombre={i.nombre_prod}
+                                            codigo={i.codigo_producto ?? ""}
+                                            nombre={i.nombre_prod ?? ""}
                                         />
                                     </TableCell>
                                 </TableRow>

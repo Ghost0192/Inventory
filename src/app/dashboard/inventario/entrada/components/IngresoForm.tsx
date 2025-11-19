@@ -14,11 +14,8 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
-
 import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
-
 import { IngresoInsert } from "../types";
 
 interface Props {
@@ -39,7 +36,6 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         nota: "",
     });
 
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +43,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
     const [showSuccess, setShowSuccess] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
 
-    // =========== 🔵 Obtener usuario autenticado ===========
+    //Obtener usuario autenticado
     useEffect(() => {
         const loadUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -62,7 +58,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         loadUser();
     }, []);
 
-    // =========== 🟣 Buscar producto por código ===========
+    //Buscar producto por código
     const buscarProducto = async (codigo: string) => {
         if (!codigo) return;
 
@@ -104,7 +100,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         nota: form.nota,
     });
 
-    // =========== 🟢 Guardar ingreso ===========
+    //Guardar ingreso
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -211,7 +207,6 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                             title="Escanea un producto"
                         />
                     </div>
-
 
                     {/* Nombre (autocompletado) */}
                     <div>
