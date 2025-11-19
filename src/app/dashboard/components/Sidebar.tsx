@@ -8,13 +8,13 @@ import {
   Package,
   ClipboardList,
   Users,
-  Box,
   ChevronDown,
   ChevronRight,
   Menu,
   X,
   LogOut,
   User,
+  Settings,
 } from 'lucide-react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
@@ -59,6 +59,10 @@ export default function Sidebar({ role, nombreCompleto, correo }: SidebarProps) 
     { href: '/dashboard/usuarios/cambiar-contrasena', label: 'Cambio de contraseña' },
   ]
 
+  const reporteSubMenu = [
+    { href: '/dashboard/reporte', label: 'Generar reporte de existencias' },
+  ]
+
   // Menús base
   let menuItems: any[] = [{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }]
 
@@ -83,25 +87,30 @@ export default function Sidebar({ role, nombreCompleto, correo }: SidebarProps) 
     menuItems.push(
       {
         label: 'Configuración',
-        icon: Box,
+        icon: Settings,
         subItems: configuracionSubMenu,
       },
       {
         label: 'Usuarios',
         icon: Users,
         subItems: usuariosSubMenu,
+      },
+      {
+        label: 'Reportes',
+        icon: ClipboardList,
+        subItems: reporteSubMenu,
       }
     )
   }
 
-  // Almacenista: no configuración ni usuarios adicionales
+  /* Almacenista: no configuración ni usuarios adicionales
   if (role === 'almacenista') {
     menuItems.push({
       href: '/dashboard/productos',
       label: 'Productos',
       icon: Box,
     })
-  }
+  }*/
 
   // Solicitante: inventario solo para ver stock
   if (role === 'solicitante') {
@@ -143,9 +152,8 @@ export default function Sidebar({ role, nombreCompleto, correo }: SidebarProps) 
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white border-r shadow-sm flex flex-col transform transition-transform duration-300 z-40 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:static md:w-64`}
+        className={`fixed top-0 left-0 h-full bg-white border-r shadow-sm flex flex-col transform transition-transform duration-300 z-40 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 md:static md:w-64`}
       >
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 px-4 py-3 border-b">
@@ -156,7 +164,7 @@ export default function Sidebar({ role, nombreCompleto, correo }: SidebarProps) 
             height={40}
             className="rounded-md"
           />
-          <h1 className="text-3xl font-bold text-green-900">Ventory</h1>
+          <h1 className="text-3xl font-bold text-green-900">Inventory</h1>
         </div>
 
         {/* Información de usuario */}
@@ -178,11 +186,10 @@ export default function Sidebar({ role, nombreCompleto, correo }: SidebarProps) 
                   <>
                     <button
                       onClick={() => toggleAccordion(item.label)}
-                      className={`flex items-center w-full px-3 py-2 rounded-md text-sm transition ${
-                        openAccordions[item.label]
+                      className={`flex items-center w-full px-3 py-2 rounded-md text-sm transition ${openAccordions[item.label]
                           ? 'bg-blue-100 text-blue-600'
                           : 'hover:bg-gray-100 text-gray-700'
-                      }`}
+                        }`}
                     >
                       <item.icon className="w-5 h-5 mr-2" />
                       <span>{item.label}</span>
