@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,6 @@ import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
 import { IngresoInsert } from "../types";
 
 interface Props {
-    ingreso?: any;          // reservado si luego agregas edición
     onSuccess: () => void;
 }
 
@@ -39,11 +37,12 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Modal
     const [showSuccess, setShowSuccess] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
 
-    //Obtener usuario autenticado
+    const [open, setOpen] = useState(false);
+
+    // Obtener usuario autenticado
     useEffect(() => {
         const loadUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -58,10 +57,9 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         loadUser();
     }, []);
 
-    //Buscar producto por código
+    // Buscar producto por código
     const buscarProducto = async (codigo: string) => {
         if (!codigo) return;
-
         const { data } = await supabase
             .from("a_productos")
             .select("*")
@@ -88,28 +86,13 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         if (name === "codigo_producto") buscarProducto(value);
     };
 
-    const buildInsertPayload = () => ({
-        auth_uid: form.auth_uid,
-        correo: form.correo,
-        sucursal: form.sucursal,
-        codigo_producto: form.codigo_producto,
-        nombre_prod: form.nombre_prod,
-        unidad_medida: form.unidad_medida,
-        cantidad_ingreso: form.cantidad_ingreso,
-        fecha_cad: form.fecha_cad,
-        nota: form.nota,
-    });
-
-    //Guardar ingreso
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const payload = buildInsertPayload();
-            const { error } = await supabase.from("a_ingresos").insert(payload);
-
+            const { error } = await supabase.from("a_ingresos").insert(form);
             if (error) throw error;
 
             setModalMessage("La entrada fue registrada correctamente.");
@@ -126,8 +109,6 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         onSuccess();
     };
 
-    const [open, setOpen] = useState(false);
-
     return (
         <>
             <SuccessModal
@@ -138,11 +119,11 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
 
             <form
                 onSubmit={handleSubmit}
-                className="space-y-6 p-6 border rounded-md bg-white shadow-sm"
+                className="space-y-6 p-4 sm:p-6 border rounded-md bg-white shadow-sm max-w-md mx-auto"
             >
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-4">
 
                     {/* Usuario */}
                     <div>
@@ -156,7 +137,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
 
                     {/* Sucursal */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>Sucursal</Label>
                         <Select
                             value={form.sucursal}
@@ -175,7 +156,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
 
                     {/* Código Producto + QR */}
-                    <div className="col-span-4 md:col-span-1 flex flex-col md:flex-row md:items-end gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-2">
                         <div className="flex-1">
                             <Label>Código Producto</Label>
                             <Input
@@ -187,10 +168,10 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                             />
                         </div>
 
-                        <div className="mt-2 md:mt-0">
+                        <div className="mt-2 sm:mt-0">
                             <Button
                                 type="button"
-                                className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto"
+                                className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
                                 onClick={() => setOpen(true)}
                             >
                                 📷 Escanear código
@@ -202,19 +183,19 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                             onClose={() => setOpen(false)}
                             onResult={async (codigo) => {
                                 setForm(prev => ({ ...prev, codigo_producto: codigo }));
-                                await buscarProducto(codigo); // actualiza nombre_prod y unidad_medida
+                                await buscarProducto(codigo);
                             }}
                             title="Escanea un producto"
                         />
                     </div>
 
-                    {/* Nombre (autocompletado) */}
+                    {/* Nombre Producto */}
                     <div>
                         <Label>Nombre Producto</Label>
                         <Input value={form.nombre_prod} disabled />
                     </div>
 
-                    {/* Unidad medida */}
+                    {/* Unidad de medida */}
                     <div>
                         <Label>Unidad de Medida</Label>
                         <Input
@@ -251,7 +232,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
 
                     {/* Nota */}
-                    <div className="md:col-span-4">
+                    <div>
                         <Label>Nota</Label>
                         <Textarea
                             name="nota"
@@ -265,7 +246,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
 
                 {/* Botón */}
                 <div className="flex justify-end">
-                    <Button type="submit" disabled={loading}>
+                    <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                         {loading ? "Guardando..." : "Registrar Entrada"}
                     </Button>
                 </div>

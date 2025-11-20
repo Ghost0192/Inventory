@@ -1,17 +1,17 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabaseClient"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { Users, Box, ClipboardCheck, Package } from "lucide-react" // íconos representativos
 
 export default function AdminView() {
     const [totalUsuarios, setTotalUsuarios] = useState(0)
-    const [ordenesEntrantes, setOrdenesEntrantes] = useState(0)
-    const [ordenesCumplidas, setOrdenesCumplidas] = useState(0)
-    type ProductoTop = { nombre: string; cantidad: number }
-    const [productosTop, setProductosTop] = useState<ProductoTop[]>([])
+    const [totalProductos, setTotalProductos] = useState(0)
+    const [stockTotal, setStockTotal] = useState(0)
+    const [productosTop, setProductosTop] = useState<any[]>([])
     const [transacciones, setTransacciones] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -19,43 +19,32 @@ export default function AdminView() {
         const fetchData = async () => {
             setLoading(true)
 
+            // Total usuarios activos
             const { count: usuariosCount } = await supabase
-                .from('usuarios')
-                .select('*', { count: 'exact', head: true })
+                .from("a_usuarios")
+                .select("*", { count: "exact", head: true })
+                .eq("activo", true)
 
-            const { count: entrantesCount } = await supabase
-                .from('Ordenes')
-                .select('*', { count: 'exact', head: true })
-                .eq('estado', 'pendiente')
+            // Total productos activos
+            const { count: productosCount } = await supabase
+                .from("a_productos")
+                .select("*", { count: "exact", head: true })
+                .eq("activo", true)
 
-            const { count: cumplidasCount } = await supabase
-                .from('Ordenes')
-                .select('*', { count: 'exact', head: true })
-                .eq('estado', 'cumplida')
-
-            const topDummy = [
-                { nombre: 'Producto A', cantidad: 120 },
-                { nombre: 'Producto B', cantidad: 95 },
-                { nombre: 'Producto C', cantidad: 80 },
-                { nombre: 'Producto D', cantidad: 75 },
-                { nombre: 'Producto E', cantidad: 60 },
-                { nombre: 'Producto F', cantidad: 55 },
-                { nombre: 'Producto G', cantidad: 45 },
-                { nombre: 'Producto H', cantidad: 40 },
-                { nombre: 'Producto I', cantidad: 30 },
-                { nombre: 'Producto J', cantidad: 25 },
-            ]
-
+            // Últimas 20 transacciones
             const { data: transaccionesData } = await supabase
-                .from('Ingreso')
-                .select('*')
-                .order('created_at', { ascending: false })
+                .from("a_ingresos")
+                .select("*")
+                .order("fecha_ing", { ascending: false })
                 .limit(20)
 
+            // Top productos (ingresos - salidas)
+            const { data: productosData } = await supabase.rpc("top_productos_stock") // mejor con función en la DB
+
             setTotalUsuarios(usuariosCount || 0)
-            setOrdenesEntrantes(entrantesCount || 0)
-            setOrdenesCumplidas(cumplidasCount || 0)
-            setProductosTop(topDummy)
+            setTotalProductos(productosCount || 0)
+            setStockTotal(productosData?.reduce((acc: number, p: any) => acc + p.stock_calculado, 0) || 0)
+            setProductosTop(productosData || [])
             setTransacciones(transaccionesData || [])
             setLoading(false)
         }
@@ -67,59 +56,31 @@ export default function AdminView() {
 
     return (
         <div className="space-y-6 p-4">
-            <h2 className="text-2xl font-bold mb-4">Ventory - Panel de Administración</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">Ventory - Panel de Administración</h2>
 
             {/* MÉTRICAS */}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-
-                <Card className="shadow-sm">
-                    <CardHeader>
-                        <CardTitle>Total de Productos</CardTitle>
-                    </CardHeader>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="shadow-sm flex items-center space-x-4 p-4">
+                    <Users className="w-10 h-10 text-blue-500" />
                     <CardContent>
-                        <p className="text-3xl font-bold">{totalUsuarios}</p>
-                        <p className="text-muted-foreground">Registrados en el sistema</p>
+                        <CardTitle>Total Usuarios</CardTitle>
+                        <p className="text-2xl font-bold">{totalUsuarios}</p>
                     </CardContent>
                 </Card>
 
-                <Card className="shadow-sm">
-                    <CardHeader>
-                        <CardTitle>Total de Almacenes</CardTitle>
-                    </CardHeader>
+                <Card className="shadow-sm flex items-center space-x-4 p-4">
+                    <Package className="w-10 h-10 text-green-500" />
                     <CardContent>
-                        <p className="text-3xl font-bold">{totalUsuarios}</p>
-                        <p className="text-muted-foreground">Registrados en el sistema</p>
+                        <CardTitle>Total Productos</CardTitle>
+                        <p className="text-2xl font-bold">{totalProductos}</p>
                     </CardContent>
                 </Card>
 
-                <Card className="shadow-sm">
-                    <CardHeader>
-                        <CardTitle>Órdenes Cumplidas</CardTitle>
-                    </CardHeader>
+                <Card className="shadow-sm flex items-center space-x-4 p-4">
+                    <ClipboardCheck className="w-10 h-10 text-purple-500" />
                     <CardContent>
-                        <p className="text-3xl font-bold">{ordenesCumplidas}</p>
-                        <p className="text-muted-foreground">Completadas exitosamente</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="shadow-sm">
-                    <CardHeader>
-                        <CardTitle>Órdenes Restantes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">{ordenesEntrantes - ordenesCumplidas}</p>
-                        <p className="text-muted-foreground">Pendientes por completar</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="shadow-sm">
-                    <CardHeader>
-                        <CardTitle>Total de Usuarios</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">{ordenesEntrantes}</p>
-                        <p className="text-muted-foreground">Pendientes por procesar</p>
+                        <CardTitle>Stock Total</CardTitle>
+                        <p className="text-2xl font-bold">{stockTotal}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -129,62 +90,58 @@ export default function AdminView() {
                 <CardHeader>
                     <CardTitle>Top 10 productos más solicitados</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="h-[300px] sm:h-[350px] md:h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={productosTop}>
-                                <XAxis dataKey="nombre" />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="cantidad" fill="#3b82f6" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                <CardContent className="h-[300px] sm:h-[350px] md:h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={productosTop}>
+                            <XAxis dataKey="nombre" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="stock_calculado" fill="#3b82f6" />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </CardContent>
             </Card>
 
             {/* TRANSACCIONES RECIENTES */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Últimas 20 transacciones (Ingresos a inventario)</CardTitle>
+                    <CardTitle>Últimas 20 transacciones (Ingresos)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {/* Tabla en desktop */}
+                    {/* Tabla desktop */}
                     <div className="hidden sm:block overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Producto</TableHead>
                                     <TableHead>Cantidad</TableHead>
-                                    <TableHead>Descripción</TableHead>
-                                    <TableHead>Marca</TableHead>
                                     <TableHead>Fecha</TableHead>
+                                    <TableHead>Sucursal</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {transacciones.map((t) => (
-                                    <TableRow key={t.id}>
-                                        <TableCell>{t.Producto}</TableCell>
-                                        <TableCell>{t.Cantidad}</TableCell>
-                                        <TableCell>{t.Descripción}</TableCell>
-                                        <TableCell>{t.Marca}</TableCell>
-                                        <TableCell>{new Date(t.created_at).toLocaleString()}</TableCell>
+                                    <TableRow key={t.id_entr}>
+                                        <TableCell>{t.nombre_prod}</TableCell>
+                                        <TableCell>{t.cantidad_ingreso}</TableCell>
+                                        <TableCell>{new Date(t.fecha_ing).toLocaleString()}</TableCell>
+                                        <TableCell>{t.sucursal}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </div>
 
-                    {/* Cards en móvil */}
+                    {/* Cards móvil */}
                     <div className="sm:hidden space-y-3">
                         {transacciones.map((t) => (
-                            <Card key={t.id} className="shadow-sm border border-gray-200">
-                                <CardContent className="p-3 space-y-1 text-sm">
-                                    <p><strong>Producto:</strong> {t.Producto}</p>
-                                    <p><strong>Cantidad:</strong> {t.Cantidad}</p>
-                                    <p><strong>Descripción:</strong> {t.Descripción}</p>
-                                    <p><strong>Marca:</strong> {t.Marca}</p>
-                                    <p><strong>Fecha:</strong> {new Date(t.created_at).toLocaleString()}</p>
+                            <Card key={t.id_entr} className="shadow-sm border border-gray-200 flex items-center space-x-3 p-3">
+                                <Package className="w-6 h-6 text-green-500" />
+                                <CardContent className="p-0 space-y-1 text-sm">
+                                    <p><strong>Producto:</strong> {t.nombre_prod}</p>
+                                    <p><strong>Cantidad:</strong> {t.cantidad_ingreso}</p>
+                                    <p><strong>Fecha:</strong> {new Date(t.fecha_ing).toLocaleString()}</p>
+                                    <p><strong>Sucursal:</strong> {t.sucursal}</p>
                                 </CardContent>
                             </Card>
                         ))}

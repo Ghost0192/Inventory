@@ -34,7 +34,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
     const [sortColumn, setSortColumn] = useState<keyof Ingreso | null>(null);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-    // 🔍 Filtro
+    //Filtro
     const filtered = useMemo(() => {
         const q = search.toLowerCase();
         return ingresos.filter(
@@ -46,7 +46,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
         );
     }, [search, ingresos]);
 
-    // ↕️ Ordenamiento
+    //Ordenamiento
     const sorted = useMemo(() => {
         if (!sortColumn) return filtered;
 
@@ -63,7 +63,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
         });
     }, [filtered, sortColumn, sortOrder]);
 
-    // 📄 Paginación
+    // Paginación
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginated = sorted.slice(start, end);
@@ -110,7 +110,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                 </div>
             </div>
 
-            {/* 🧾 Tabla */}
+            {/*Tabla*/}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -180,7 +180,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                 </Table>
             </div>
 
-            {/* 📄 Paginación */}
+            {/*Paginación */}
             <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">
                     Mostrando {start + 1} - {Math.min(end, sorted.length)} de{" "}
