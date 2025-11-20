@@ -14,37 +14,44 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
-import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
-import { IngresoInsert } from "../types";
-import { Ingreso } from "../types";
+import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
+import { Salida } from "../types";
 
 interface Props {
-    ingreso?: Ingreso;
+    salida?: Salida;
     onSuccess: () => void;
 }
 
-export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
-    const [form, setForm] = useState<IngresoInsert>({
+interface SalidaFormData {
+    auth_uid: string;
+    correo: string;
+    sucursal: string;
+    codigo_producto: string;
+    nombre_prod?: string;
+    unidad_medida?: string;
+    cantidad_salida: number;
+    nota?: string | null;
+}
+
+export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
+    const [form, setForm] = useState<SalidaFormData>({
         auth_uid: "",
         correo: "",
         sucursal: "",
         codigo_producto: "",
         nombre_prod: "",
         unidad_medida: "",
-        cantidad_ingreso: 0,
-        fecha_cad: null,
+        cantidad_salida: 0,
         nota: "",
     });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const [showSuccess, setShowSuccess] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
-
     const [open, setOpen] = useState(false);
 
-    // Obtener usuario autenticado
+    // Cargar usuario autenticado
     useEffect(() => {
         const loadUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -59,7 +66,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         loadUser();
     }, []);
 
-    // Buscar producto por código
+    // Buscar producto y traer nombre y unidad
     const buscarProducto = async (codigo: string) => {
         if (!codigo) return;
         const { data } = await supabase
@@ -75,11 +82,31 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         }));
     };
 
+    // Consultar stock disponible
+    const consultarStock = async (codigo: string) => {
+        if (!codigo) return 0;
+
+        const { data: ingresos } = await supabase
+            .from('a_ingresos')
+            .select('cantidad_ingreso')
+            .eq('codigo_producto', codigo);
+
+        const { data: salidas } = await supabase
+            .from('a_salidas')
+            .select('cantidad_salida')
+            .eq('codigo_producto', codigo);
+
+        const totalIngresos = ingresos?.reduce((acc, x) => acc + Number(x.cantidad_ingreso), 0) || 0;
+        const totalSalidas = salidas?.reduce((acc, x) => acc + Number(x.cantidad_salida), 0) || 0;
+
+        return totalIngresos - totalSalidas;
+    };
+
+    // Cambios en inputs
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value, type } = e.target;
-
         setForm(prev => ({
             ...prev,
             [name]: type === "number" ? Number(value) : value,
@@ -88,19 +115,28 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         if (name === "codigo_producto") buscarProducto(value);
     };
 
+    // Submit del formulario
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const { error } = await supabase.from("a_ingresos").insert(form);
+            const stockDisponible = await consultarStock(form.codigo_producto);
+
+            if (form.cantidad_salida > stockDisponible) {
+                setError(`No hay suficiente stock. Disponible: ${stockDisponible}`);
+                setLoading(false);
+                return;
+            }
+
+            const { error } = await supabase.from("a_salidas").insert(form);
             if (error) throw error;
 
-            setModalMessage("La entrada fue registrada correctamente.");
+            setModalMessage("La salida fue registrada correctamente.");
             setShowSuccess(true);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Error al guardar el ingreso");
+            setError(err instanceof Error ? err.message : "Error al guardar la salida");
         } finally {
             setLoading(false);
         }
@@ -125,29 +161,23 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
             >
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                {/* GRID RESPONSIVA */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                    {/* Usuario */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>ID Usuario</Label>
                         <Input value={form.auth_uid} disabled />
                     </div>
-
-                    <div className="col-span-1">
+                    <div>
                         <Label>Correo</Label>
                         <Input value={form.correo} disabled />
                     </div>
-
-                    {/* Sucursal */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>Sucursal</Label>
                         <Select
                             value={form.sucursal}
                             onValueChange={(val) => setForm({ ...form, sucursal: val })}
                         >
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecciona una sucursal" />
+                                <SelectValue placeholder="Selecciona sucursal" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Hijuelas">Hijuelas</SelectItem>
@@ -158,13 +188,9 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         </Select>
                     </div>
 
-                    {/* Código Producto + QR */}
                     <div className="col-span-1 sm:col-span-2 lg:col-span-1">
                         <Label>Código Producto</Label>
-
                         <div className="flex flex-col sm:flex-row gap-2 mt-1">
-
-                            {/* Input */}
                             <Input
                                 name="codigo_producto"
                                 value={form.codigo_producto}
@@ -173,8 +199,6 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                                 required
                                 className="flex-1"
                             />
-
-                            {/* Botón QR */}
                             <Button
                                 type="button"
                                 className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
@@ -195,14 +219,12 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         />
                     </div>
 
-                    {/* Nombre Producto */}
                     <div className="col-span-1 sm:col-span-2 lg:col-span-2">
                         <Label>Nombre Producto</Label>
                         <Input value={form.nombre_prod} disabled />
                     </div>
 
-                    {/* Unidad medida */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>Unidad de Medida</Label>
                         <Input
                             name="unidad_medida"
@@ -211,33 +233,18 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         />
                     </div>
 
-                    {/* Cantidad */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>Cantidad</Label>
                         <Input
                             type="number"
                             step="0.01"
-                            name="cantidad_ingreso"
-                            value={form.cantidad_ingreso}
+                            name="cantidad_salida"
+                            value={form.cantidad_salida}
                             onChange={handleChange}
                             required
                         />
                     </div>
 
-                    {/* Fecha caducidad */}
-                    <div className="col-span-1">
-                        <Label>Fecha de Caducidad</Label>
-                        <Input
-                            type="date"
-                            name="fecha_cad"
-                            value={form.fecha_cad ?? ""}
-                            onChange={(e) =>
-                                setForm({ ...form, fecha_cad: e.target.value })
-                            }
-                        />
-                    </div>
-
-                    {/* Nota */}
                     <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                         <Label>Nota</Label>
                         <Textarea
@@ -250,14 +257,12 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
                 </div>
 
-                {/* Botón Submit */}
                 <div className="flex justify-end">
                     <Button type="submit" disabled={loading}>
-                        {loading ? "Guardando..." : "Registrar Entrada"}
+                        {loading ? "Guardando..." : "Registrar Salida"}
                     </Button>
                 </div>
             </form>
-
         </>
     );
 };

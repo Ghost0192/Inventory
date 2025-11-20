@@ -44,9 +44,13 @@ export default function DashboardPage() {
         <div className="flex h-screen">
             <div className="flex-1 flex flex-col">
                 <div className="flex-1 bg-gray-50">
-                    {perfil!.rol === "almacenista" && <AlmacenistaView />}
+                    {/*{perfil!.rol === "almacenista" && <AlmacenistaView />}
                     {(perfil!.rol === "admin" || perfil!.rol === "gerente") && <AdminView />}
-                    {perfil!.rol === "solicitante" && <SolicitanteView />}
+                    {perfil!.rol === "solicitante" && <SolicitanteView />}*/}
+
+                    {perfil?.rol === "almacenista" && <AlmacenistaView />}
+                    {(perfil?.rol === "admin" || perfil?.rol === "gerente") && <AdminView />}
+                    {perfil?.rol === "solicitante" && <SolicitanteView />}
                 </div>
             </div>
         </div>
