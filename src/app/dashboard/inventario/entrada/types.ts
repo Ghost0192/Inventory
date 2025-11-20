@@ -1,4 +1,5 @@
 // 📦 Tipos basados en a_ingresos
+"use client";
 
 export interface Ingreso {
     id_entr: string;

@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
