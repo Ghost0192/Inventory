@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
-import { Users, Box, ClipboardCheck, Package } from "lucide-react" // íconos representativos
+import { Users, ClipboardCheck, Package } from "lucide-react" // íconos representativos
 
 export default function AdminView() {
     const [totalUsuarios, setTotalUsuarios] = useState(0)

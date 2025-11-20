@@ -16,8 +16,10 @@ import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
 import { IngresoInsert } from "../types";
+import { Ingreso } from "../types";
 
 interface Props {
+    ingreso?: Ingreso;
     onSuccess: () => void;
 }
 
