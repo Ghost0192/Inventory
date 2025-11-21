@@ -14,9 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
-import { QrScannerModal } from '@/components/ui/common/QrScannerModal';
-import { IngresoInsert } from "../types";
-import { Ingreso } from "../types";
+import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
+import { IngresoInsert, Ingreso } from "../types";
 
 interface Props {
     ingreso?: Ingreso;
@@ -30,6 +29,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         sucursal: "",
         codigo_producto: "",
         nombre_prod: "",
+        descripcion_prod: "",  
         unidad_medida: "",
         cantidad_ingreso: 0,
         fecha_cad: null,
@@ -38,10 +38,8 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const [showSuccess, setShowSuccess] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
-
     const [open, setOpen] = useState(false);
 
     // Obtener usuario autenticado
@@ -62,6 +60,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
     // Buscar producto por código
     const buscarProducto = async (codigo: string) => {
         if (!codigo) return;
+
         const { data } = await supabase
             .from("a_productos")
             .select("*")
@@ -71,6 +70,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         setForm(prev => ({
             ...prev,
             nombre_prod: data?.nombre_prod ?? "",
+            descripcion_prod: data?.descripcion_prod ?? "",  // <── AGREGADO
             unidad_medida: data?.unidad_medida ?? "",
         }));
     };
@@ -129,18 +129,18 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
                     {/* Usuario */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>ID Usuario</Label>
                         <Input value={form.auth_uid} disabled />
                     </div>
 
-                    <div className="col-span-1">
+                    <div>
                         <Label>Correo</Label>
                         <Input value={form.correo} disabled />
                     </div>
 
                     {/* Sucursal */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>Sucursal</Label>
                         <Select
                             value={form.sucursal}
@@ -163,8 +163,6 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Label>Código Producto</Label>
 
                         <div className="flex flex-col sm:flex-row gap-2 mt-1">
-
-                            {/* Input */}
                             <Input
                                 name="codigo_producto"
                                 value={form.codigo_producto}
@@ -174,7 +172,6 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                                 className="flex-1"
                             />
 
-                            {/* Botón QR */}
                             <Button
                                 type="button"
                                 className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
@@ -196,23 +193,29 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
 
                     {/* Nombre Producto */}
-                    <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+                    <div>
                         <Label>Nombre Producto</Label>
                         <Input value={form.nombre_prod} disabled />
                     </div>
 
-                    {/* Unidad medida */}
-                    <div className="col-span-1">
+                    {/* Descripción Producto */}
+                    <div>
+                        <Label>Descripción Producto</Label>
+                        <Input value={form.descripcion_prod} disabled />
+                    </div>
+
+                    {/* Unidad de Medida */}
+                    <div>
                         <Label>Unidad de Medida</Label>
                         <Input
                             name="unidad_medida"
                             value={form.unidad_medida}
-                            onChange={handleChange}
+                            disabled
                         />
                     </div>
 
                     {/* Cantidad */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>Cantidad</Label>
                         <Input
                             type="number"
@@ -225,7 +228,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
 
                     {/* Fecha caducidad */}
-                    <div className="col-span-1">
+                    <div>
                         <Label>Fecha de Caducidad</Label>
                         <Input
                             type="date"
@@ -234,6 +237,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                             onChange={(e) =>
                                 setForm({ ...form, fecha_cad: e.target.value })
                             }
+                            required
                         />
                     </div>
 
@@ -250,14 +254,12 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
                 </div>
 
-                {/* Botón Submit */}
                 <div className="flex justify-end">
                     <Button type="submit" disabled={loading}>
                         {loading ? "Guardando..." : "Registrar Entrada"}
                     </Button>
                 </div>
             </form>
-
         </>
     );
 };

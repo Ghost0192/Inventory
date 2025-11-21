@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
-import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
+    import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
 import { Salida } from "../types";
 
 interface Props {
@@ -51,6 +51,9 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
     const [modalMessage, setModalMessage] = useState("");
     const [open, setOpen] = useState(false);
 
+    // Nuevo estado para stock disponible
+    const [stockDisponible, setStockDisponible] = useState<number>(0);
+
     // Cargar usuario autenticado
     useEffect(() => {
         const loadUser = async () => {
@@ -83,24 +86,43 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
     };
 
     // Consultar stock disponible
-    const consultarStock = async (codigo: string) => {
+    const consultarStock = async (codigo: string): Promise<number> => {
         if (!codigo) return 0;
 
         const { data: ingresos } = await supabase
-            .from('a_ingresos')
-            .select('cantidad_ingreso')
-            .eq('codigo_producto', codigo);
+            .from("a_ingresos")
+            .select("cantidad_ingreso")
+            .eq("codigo_producto", codigo);
 
         const { data: salidas } = await supabase
-            .from('a_salidas')
-            .select('cantidad_salida')
-            .eq('codigo_producto', codigo);
+            .from("a_salidas")
+            .select("cantidad_salida")
+            .eq("codigo_producto", codigo);
 
-        const totalIngresos = ingresos?.reduce((acc, x) => acc + Number(x.cantidad_ingreso), 0) || 0;
-        const totalSalidas = salidas?.reduce((acc, x) => acc + Number(x.cantidad_salida), 0) || 0;
+        const totalIngresos =
+            ingresos?.reduce((acc, x) => acc + Number(x.cantidad_ingreso), 0) || 0;
+
+        const totalSalidas =
+            salidas?.reduce((acc, x) => acc + Number(x.cantidad_salida), 0) || 0;
 
         return totalIngresos - totalSalidas;
     };
+
+    // Cada vez que cambie el código → consultar stock y producto
+    useEffect(() => {
+        const fetchStock = async () => {
+            if (!form.codigo_producto) {
+                setStockDisponible(0);
+                return;
+            }
+
+            const stock = await consultarStock(form.codigo_producto);
+            setStockDisponible(stock);
+        };
+
+        fetchStock();
+        buscarProducto(form.codigo_producto);
+    }, [form.codigo_producto]);
 
     // Cambios en inputs
     const handleChange = (
@@ -111,8 +133,6 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
             ...prev,
             [name]: type === "number" ? Number(value) : value,
         }));
-
-        if (name === "codigo_producto") buscarProducto(value);
     };
 
     // Submit del formulario
@@ -122,8 +142,6 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         setError(null);
 
         try {
-            const stockDisponible = await consultarStock(form.codigo_producto);
-
             if (form.cantidad_salida > stockDisponible) {
                 setError(`No hay suficiente stock. Disponible: ${stockDisponible}`);
                 setLoading(false);
@@ -166,10 +184,12 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         <Label>ID Usuario</Label>
                         <Input value={form.auth_uid} disabled />
                     </div>
+
                     <div>
                         <Label>Correo</Label>
                         <Input value={form.correo} disabled />
                     </div>
+
                     <div>
                         <Label>Sucursal</Label>
                         <Select
@@ -199,6 +219,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                                 required
                                 className="flex-1"
                             />
+
                             <Button
                                 type="button"
                                 className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
@@ -213,13 +234,12 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                             onClose={() => setOpen(false)}
                             onResult={async (codigo) => {
                                 setForm(prev => ({ ...prev, codigo_producto: codigo }));
-                                await buscarProducto(codigo);
                             }}
                             title="Escanea un producto"
                         />
                     </div>
 
-                    <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-1">
                         <Label>Nombre Producto</Label>
                         <Input value={form.nombre_prod} disabled />
                     </div>
@@ -229,7 +249,16 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         <Input
                             name="unidad_medida"
                             value={form.unidad_medida}
-                            onChange={handleChange}
+                            disabled
+                        />
+                    </div>
+
+                    <div>
+                        <Label>Stock Disponible</Label>
+                        <Input
+                            name="stock_disponible"
+                            value={stockDisponible}
+                            disabled
                         />
                     </div>
 
@@ -255,6 +284,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                             placeholder="Observaciones opcionales"
                         />
                     </div>
+                    
                 </div>
 
                 <div className="flex justify-end">

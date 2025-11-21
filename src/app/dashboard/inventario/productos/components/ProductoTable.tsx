@@ -34,7 +34,7 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
     const [sortColumn, setSortColumn] = useState<keyof Producto | null>(null);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-    // 🔍 Filtrado
+    // Filtrado
     const filtered = useMemo(() => {
         const q = search.toLowerCase();
         return productos.filter(
@@ -45,7 +45,7 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
         );
     }, [search, productos]);
 
-    // ↕️ Ordenamiento
+    // Ordenamiento
     const sorted = useMemo(() => {
         if (!sortColumn) return filtered;
 
@@ -63,13 +63,13 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
         });
     }, [filtered, sortColumn, sortOrder]);
 
-    // 📄 Paginación
+    // Paginación
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginated = sorted.slice(start, end);
     const totalPages = Math.ceil(sorted.length / rowsPerPage);
 
-    // ⚙️ Función para alternar orden
+    // Función para alternar orden
     const handleSort = (column: keyof Producto) => {
         if (sortColumn === column) {
             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -110,16 +110,16 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                 </div>
             </div>
 
-            {/* 🧾 Tabla principal */}
+            {/*Tabla principal */}
             <div className="rounded-md border ">
                 <Table>
                     <TableHeader>
                         <TableRow>
                             {[
-                                { key: "id_prod", label: "ID" },
-                                { key: "fecha_reg", label: "Fecha" },
+                                { key: "fecha_reg", label: "Fecha ingreso" },
                                 { key: "codigo_producto", label: "Código" },
                                 { key: "nombre_prod", label: "Nombre" },
+                                { key: "descripcion_prod", label: "Descripción" },
                                 { key: "marca_prod", label: "Marca" },
                                 { key: "categoria_prod", label: "Categoría" },
                                 { key: "nombre_proveedor", label: "Proveedor" },
@@ -143,7 +143,6 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                                                 }`}
                                         />
                                     </div>
-
                                 </TableHead>
                             ))}
                             <TableHead>Estatus</TableHead>
@@ -155,10 +154,10 @@ export const ProductoTable: React.FC<Props> = ({ productos }) => {
                         {paginated.length > 0 ? (
                             paginated.map((p) => (
                                 <TableRow key={p.id_prod}>
-                                    <TableCell>{p.id_prod}</TableCell>
                                     <TableCell>{p.fecha_reg}</TableCell>
                                     <TableCell>{p.codigo_producto}</TableCell>
                                     <TableCell>{p.nombre_prod}</TableCell>
+                                    <TableCell>{p.descripcion_prod}</TableCell>
                                     <TableCell>{p.marca_prod}</TableCell>
                                     <TableCell>{p.categoria_prod}</TableCell>
                                     <TableCell>{p.nombre_proveedor}</TableCell>

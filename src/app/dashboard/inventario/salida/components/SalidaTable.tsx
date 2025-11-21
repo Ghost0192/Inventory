@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import { QRCreate } from "@/components/ui/common/QRCreate";
 
 interface Props {
     salidas: Salida[];
@@ -113,7 +112,6 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
                                     </div>
                                 </TableHead>
                             ))}
-                            <TableHead>QR</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -129,9 +127,6 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
                                     <TableCell>{s.unidad_medida}</TableCell>
                                     <TableCell>{s.cantidad_salida}</TableCell>
                                     <TableCell>{s.nota}</TableCell>
-                                    <TableCell>
-                                        <QRCreate codigo={s.codigo_producto ?? ""} nombre={s.nombre_prod ?? ""} />
-                                    </TableCell>
                                 </TableRow>
                             ))
                         ) : (

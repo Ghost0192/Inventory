@@ -21,8 +21,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
 
-import { QRCreate } from "@/components/ui/common/QRCreate";
-
 interface Props {
     ingresos: Ingreso[];
 }
@@ -81,6 +79,9 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
 
     return (
         <div className="space-y-4 border p-4 rounded">
+            <h1 className="text-2xl font-bold text-start mb-4">
+                Tabla de Entradas al Inventario
+            </h1>
             {/* 🔍 Barra superior */}
             <div className="flex items-center justify-between gap-4">
                 <Input
@@ -116,11 +117,11 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                     <TableHeader>
                         <TableRow>
                             {[
-                                { key: "id_entr", label: "ID" },
                                 { key: "fecha_ing", label: "Fecha" },
                                 { key: "sucursal", label: "Sucursal" },
                                 { key: "codigo_producto", label: "Código" },
                                 { key: "nombre_prod", label: "Nombre" },
+                                { key: "descripcion_prod", label: "Descripción Producto" },
                                 { key: "unidad_medida", label: "Unidad" },
                                 { key: "cantidad_ingreso", label: "Cantidad" },
                                 { key: "fecha_cad", label: "Caducidad" },
@@ -135,14 +136,13 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                                         <ArrowUpDown
                                             size={14}
                                             className={`transition-transform ${sortColumn === col.key
-                                                    ? "text-blue-500"
-                                                    : "text-gray-400"
+                                                ? "text-blue-500"
+                                                : "text-gray-400"
                                                 }`}
                                         />
                                     </div>
                                 </TableHead>
                             ))}
-                            <TableHead>QR</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -150,20 +150,14 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                         {paginated.length > 0 ? (
                             paginated.map((i) => (
                                 <TableRow key={i.id_entr}>
-                                    <TableCell>{i.id_entr}</TableCell>
                                     <TableCell>{i.fecha_ing}</TableCell>
                                     <TableCell>{i.sucursal}</TableCell>
                                     <TableCell>{i.codigo_producto}</TableCell>
                                     <TableCell>{i.nombre_prod}</TableCell>
+                                    <TableCell>{i.descripcion_prod}</TableCell>
                                     <TableCell>{i.unidad_medida}</TableCell>
                                     <TableCell>{i.cantidad_ingreso}</TableCell>
                                     <TableCell>{i.fecha_cad}</TableCell>
-                                    <TableCell>
-                                        <QRCreate
-                                            codigo={i.codigo_producto ?? ""}
-                                            nombre={i.nombre_prod ?? ""}
-                                        />
-                                    </TableCell>
                                 </TableRow>
                             ))
                         ) : (

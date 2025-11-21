@@ -9,6 +9,7 @@ export interface Ingreso {
     sucursal: string | null;
     codigo_producto: string;
     nombre_prod: string | null;
+    descripcion_prod: string | null;
     unidad_medida: string | null;
     cantidad_ingreso: number;
     fecha_cad: string | null;
@@ -22,6 +23,7 @@ export interface IngresoInsert {
     sucursal: string;
     codigo_producto: string;
     nombre_prod?: string;
+    descripcion_prod?: string;
     unidad_medida?: string;
     cantidad_ingreso: number;
     fecha_cad?: string | null;
