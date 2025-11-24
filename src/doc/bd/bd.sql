@@ -115,6 +115,7 @@ CREATE TABLE public.a_ingresos (
     sucursal TEXT,
     codigo_producto TEXT NOT NULL REFERENCES public.a_productos(codigo_producto) ON DELETE CASCADE,
     nombre_prod TEXT,
+    descripcion_prod TEXT,
     unidad_medida TEXT,
     cantidad_ingreso NUMERIC(10,2) NOT NULL CHECK (cantidad_ingreso > 0),
     fecha_cad DATE,
@@ -136,6 +137,9 @@ CREATE TABLE public.a_salidas (
     sucursal TEXT,
     codigo_producto TEXT NOT NULL REFERENCES public.a_productos(codigo_producto) ON DELETE CASCADE,
     nombre_prod TEXT,
+    descripcion_prod TEXT,
+    area_destino TEXT,
+    numero_documento TEXT,
     unidad_medida TEXT,
     cantidad_salida NUMERIC(10,2) NOT NULL CHECK (cantidad_salida > 0),
     nota TEXT
@@ -261,3 +265,8 @@ LEFT JOIN public.a_ingresos i ON p.codigo_producto = i.codigo_producto
 LEFT JOIN public.a_salidas s ON p.codigo_producto = s.codigo_producto
 GROUP BY p.codigo_producto, p.nombre_prod, p.stock_min
 ORDER BY p.nombre_prod;
+
+
+--stock actual por producto
+--productos bajo stock
+--Función: productos próximos a caducar (≤ 30 días)

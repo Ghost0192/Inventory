@@ -96,11 +96,13 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
                     <TableHeader>
                         <TableRow>
                             {[
-                                { key: "id_salida", label: "ID" },
                                 { key: "fecha_salida", label: "Fecha" },
                                 { key: "sucursal", label: "Sucursal" },
                                 { key: "codigo_producto", label: "Código" },
                                 { key: "nombre_prod", label: "Nombre" },
+                                { key: "descripcion_prod", label: "Descripcion" },
+                                { key: "area_destino", label: "Area destino" },
+                                { key: "numero_documento", label: "# Documento" },
                                 { key: "unidad_medida", label: "Unidad" },
                                 { key: "cantidad_salida", label: "Cantidad" },
                                 { key: "nota", label: "Nota" },
@@ -119,11 +121,13 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
                         {paginated.length > 0 ? (
                             paginated.map((s) => (
                                 <TableRow key={s.id_salida}>
-                                    <TableCell>{s.id_salida}</TableCell>
                                     <TableCell>{s.fecha_salida}</TableCell>
                                     <TableCell>{s.sucursal}</TableCell>
                                     <TableCell>{s.codigo_producto}</TableCell>
                                     <TableCell>{s.nombre_prod}</TableCell>
+                                    <TableCell>{s.descripcion_prod}</TableCell>
+                                    <TableCell>{s.area_destino}</TableCell>
+                                    <TableCell>{s.numero_documento}</TableCell>
                                     <TableCell>{s.unidad_medida}</TableCell>
                                     <TableCell>{s.cantidad_salida}</TableCell>
                                     <TableCell>{s.nota}</TableCell>

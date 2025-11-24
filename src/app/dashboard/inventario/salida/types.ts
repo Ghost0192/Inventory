@@ -9,6 +9,9 @@ export interface Salida {
     sucursal: string | null;
     codigo_producto: string;
     nombre_prod: string | null;
+    descripcion_prod: string | null;
+    area_destino: string | null;
+    numero_documento: string | null;
     unidad_medida: string | null;
     cantidad_salida: number;
     nota?: string | null;
@@ -21,6 +24,9 @@ export interface SalidaInsert {
     sucursal: string;
     codigo_producto: string;
     nombre_prod?: string;
+    descripcion_prod?: string;
+    area_destino?: string;
+    numero_documento?: string;
     unidad_medida?: string;
     cantidad_salida: number;
     nota?: string | null;

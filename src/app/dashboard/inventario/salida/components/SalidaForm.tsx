@@ -14,32 +14,25 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
-    import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
-import { Salida } from "../types";
+import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
+import { Salida, SalidaInsert } from "../types";
 
 interface Props {
     salida?: Salida;
     onSuccess: () => void;
 }
 
-interface SalidaFormData {
-    auth_uid: string;
-    correo: string;
-    sucursal: string;
-    codigo_producto: string;
-    nombre_prod?: string;
-    unidad_medida?: string;
-    cantidad_salida: number;
-    nota?: string | null;
-}
 
 export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
-    const [form, setForm] = useState<SalidaFormData>({
+    const [form, setForm] = useState<SalidaInsert>({
         auth_uid: "",
         correo: "",
         sucursal: "",
         codigo_producto: "",
         nombre_prod: "",
+        descripcion_prod: "",
+        area_destino: "",
+        numero_documento: "",
         unidad_medida: "",
         cantidad_salida: 0,
         nota: "",
@@ -81,6 +74,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         setForm(prev => ({
             ...prev,
             nombre_prod: data?.nombre_prod ?? "",
+            descripcion_prod: data?.descripcion_prod ?? "",
             unidad_medida: data?.unidad_medida ?? "",
         }));
     };
@@ -141,13 +135,32 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         setLoading(true);
         setError(null);
 
-        try {
-            if (form.cantidad_salida > stockDisponible) {
-                setError(`No hay suficiente stock. Disponible: ${stockDisponible}`);
-                setLoading(false);
-                return;
-            }
+        // Validaciones manuales
+        if (!form.sucursal) {
+            setError("Debes seleccionar una sucursal");
+            setLoading(false);
+            return;
+        }
 
+        if (!form.codigo_producto) {
+            setError("Debes ingresar un código de producto");
+            setLoading(false);
+            return;
+        }
+
+        if (!form.cantidad_salida || form.cantidad_salida <= 0) {
+            setError("Debes ingresar una cantidad válida");
+            setLoading(false);
+            return;
+        }
+
+        if (form.cantidad_salida > stockDisponible) {
+            setError(`No hay suficiente stock. Disponible: ${stockDisponible}`);
+            setLoading(false);
+            return;
+        }
+
+        try {
             const { error } = await supabase.from("a_salidas").insert(form);
             if (error) throw error;
 
@@ -159,6 +172,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
             setLoading(false);
         }
     };
+
 
     const handleModalClose = () => {
         setShowSuccess(false);
@@ -195,6 +209,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         <Select
                             value={form.sucursal}
                             onValueChange={(val) => setForm({ ...form, sucursal: val })}
+                            required
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona sucursal" />
@@ -244,6 +259,40 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         <Input value={form.nombre_prod} disabled />
                     </div>
 
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+                        <Label>Descripción</Label>
+                        <Input value={form.descripcion_prod} disabled />
+                    </div>
+
+                    {/* Area destino */}
+                    <div>
+                        <Label>Area destino</Label>
+                        <Select
+                            value={form.area_destino}
+                            onValueChange={(val) => setForm({ ...form, area_destino: val })}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecciona un destino" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Oficinas">Oficinas</SelectItem>
+                                <SelectItem value="Medios">Medios</SelectItem>
+                                <SelectItem value="Trasfer 1">Trasfer 1</SelectItem>
+                                <SelectItem value="Trasfer 2">Trasfer 2</SelectItem>
+                                <SelectItem value="Trasfer 3">Trasfer 3</SelectItem>
+                                <SelectItem value="Trasfer 4">Trasfer 4</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+                        <Label># de documento</Label>
+                        <Input value={form.numero_documento}
+                            name="numero_documento"
+                            onChange={handleChange}
+                        />
+                    </div>
+
                     <div>
                         <Label>Unidad de Medida</Label>
                         <Input
@@ -284,7 +333,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                             placeholder="Observaciones opcionales"
                         />
                     </div>
-                    
+
                 </div>
 
                 <div className="flex justify-end">
