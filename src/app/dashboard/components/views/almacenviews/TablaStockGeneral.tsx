@@ -24,8 +24,7 @@ export default function TablaStockGeneral() {
         const loadStock = async () => {
             const { data, error } = await supabase
                 .from("v_stock_disponible")
-                .select("*")
-                .order('estado_stock', { ascending: false }); // Usamos la ordenación de la vista
+                .select("*");
 
             if (error) {
                 console.error("Error al cargar datos:", error);
@@ -99,7 +98,6 @@ export default function TablaStockGeneral() {
                     <TableRow>
                         <TableHead>Código</TableHead>
                         <TableHead>Producto</TableHead>
-                        <TableHead>Stock Mínimo</TableHead>
                         <TableHead>Ingresos</TableHead>
                         <TableHead>Salidas</TableHead>
                         <TableHead>Disponible</TableHead>
@@ -129,7 +127,6 @@ export default function TablaStockGeneral() {
                             <TableRow key={item.codigo_producto} className={getRowColor(item.estado_stock)}>
                                 <TableCell>{item.codigo_producto}</TableCell>
                                 <TableCell>{item.nombre_prod}</TableCell>
-                                <TableCell>{item.stock_min}</TableCell>
                                 <TableCell>{item.total_ingresos}</TableCell>
                                 <TableCell>{item.total_salidas}</TableCell>
                                 <TableCell>{item.stock_disponible}</TableCell>

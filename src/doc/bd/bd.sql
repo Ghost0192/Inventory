@@ -25,7 +25,6 @@ CREATE TABLE public.a_usuarios (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
 COMMENT ON TABLE public.a_usuarios IS
 'Usuarios sincronizados con auth.users, incluyendo rol, sucursal y estado.';
 
@@ -34,7 +33,6 @@ COMMENT ON COLUMN public.a_usuarios.rol IS
 
 COMMENT ON COLUMN public.a_usuarios.sucursal IS
 'Nombre o identificador de la sucursal asignada al usuario.';
-
 
 -- =====================================================
 -- ⚙️ FUNCIÓN TRIGGER: crear_usuario_automatico
