@@ -1,4 +1,4 @@
-// types.ts
+// src/app/dashboard/inventario/salida/types.ts
 "use client";
 
 export interface Salida {

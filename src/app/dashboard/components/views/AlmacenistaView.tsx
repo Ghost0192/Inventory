@@ -1,3 +1,8 @@
+//src/app/dashboard/components/views/AlmacenistaView.tsx
+'use client';
+
+import React from 'react';
+
 export default function AlmacenistaView() {
     return (
         <div className="p-6">

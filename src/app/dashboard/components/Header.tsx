@@ -1,3 +1,6 @@
+//src/app/dashboard/components/Header.tsx
+"use client"
+
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { LogOut, User, ChevronDown } from "lucide-react"

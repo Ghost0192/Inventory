@@ -1,3 +1,4 @@
+//src/app/dashboard/components/views/almacenviews/TablaStockGeneral.tsx
 "use client";
 
 import { useEffect, useState, useMemo } from "react";

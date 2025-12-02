@@ -1,3 +1,4 @@
+//src/app/dashboard/inventario/entrada/components/IngresoTable.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";

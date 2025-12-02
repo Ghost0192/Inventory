@@ -1,4 +1,6 @@
+//src/app/dashboard/components/views/adminviews/StockCards.tsx
 "use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";

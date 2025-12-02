@@ -1,3 +1,4 @@
+//src/app/dashboard/components/views/adminviews/ProximosCaducarTable.tsx
 "use client";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

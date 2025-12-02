@@ -1,3 +1,4 @@
+// src/app/dashboard/inventario/salida/components/SalidaForm.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -21,7 +22,6 @@ interface Props {
     salida?: Salida;
     onSuccess: () => void;
 }
-
 
 export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
     const [form, setForm] = useState<SalidaInsert>({
@@ -173,7 +173,6 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         }
     };
 
-
     const handleModalClose = () => {
         setShowSuccess(false);
         onSuccess();
@@ -277,10 +276,10 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                             <SelectContent>
                                 <SelectItem value="Oficinas">Oficinas</SelectItem>
                                 <SelectItem value="Medios">Medios</SelectItem>
-                                <SelectItem value="Trasfer 1">Trasfer 1</SelectItem>
-                                <SelectItem value="Trasfer 2">Trasfer 2</SelectItem>
-                                <SelectItem value="Trasfer 3">Trasfer 3</SelectItem>
-                                <SelectItem value="Trasfer 4">Trasfer 4</SelectItem>
+                                <SelectItem value="Trasfer 1">Transfer 1</SelectItem>
+                                <SelectItem value="Trasfer 2">Transfer 2</SelectItem>
+                                <SelectItem value="Trasfer 3">Transfer 3</SelectItem>
+                                <SelectItem value="Trasfer 4">Transfer 4</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

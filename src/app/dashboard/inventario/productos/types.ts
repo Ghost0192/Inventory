@@ -1,6 +1,7 @@
 // Read Tabla Productos desde la BD
 "use client";
 
+// Definición de la interfaz Producto
 export interface Producto {
     id_prod: string;
     fecha_reg: string;

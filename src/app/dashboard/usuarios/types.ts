@@ -1,4 +1,4 @@
-// app/dashboard/usuarios/types.ts
+// src/app/dashboard/usuarios/types.ts
 
 export interface Usuario {
     id?: number;

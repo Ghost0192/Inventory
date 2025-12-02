@@ -1,4 +1,4 @@
-//AdminView.tsx
+// src/app/dashboard/components/views/AdminView.tsx
 "use client";
 
 import React from "react";

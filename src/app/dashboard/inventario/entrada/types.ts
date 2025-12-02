@@ -1,4 +1,5 @@
-// 📦 Tipos basados en a_ingresos
+// src/app/dashboard/inventario/entrada/types.ts
+// Tipos basados en a_ingresos
 "use client";
 
 export interface Ingreso {

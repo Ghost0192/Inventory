@@ -1,6 +1,5 @@
+//src/app/dashboard/components/views/adminviews/DashboardCharts.tsx
 "use client";
-
-import React from "react";
 
 const DashboardCharts = () => {
     return (

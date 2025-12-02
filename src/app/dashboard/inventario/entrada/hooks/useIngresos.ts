@@ -1,3 +1,4 @@
+// src/app/dashboard/inventario/entrada/hooks/useIngresos.ts
 "use client";
 
 import { useState, useEffect } from "react";

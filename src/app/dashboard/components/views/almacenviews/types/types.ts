@@ -1,3 +1,4 @@
+//src/app/dashboard/components/views/almacenviews/types/types.ts
 // Tipo de dato para stock general
 export interface StockGeneral {
     codigo_producto: string;
