@@ -22,11 +22,36 @@ export interface IngresoInsert {
     auth_uid: string;
     correo: string;
     sucursal: string;
+    bodega: string,
     codigo_producto: string;
-    nombre_prod?: string;
+    nombre_prod: string;
     descripcion_prod?: string;
     unidad_medida?: string;
     cantidad_ingreso: number;
+    marca: string,
+    origen_prod: string,
+    id_proveedor: string,
+    nombre_proveedor: string,
     fecha_cad?: string | null;
     nota?: string | null;
+}
+
+export interface IngresoEdit {
+    id_entr: string;
+    fecha_ing: string;
+    auth_uid: string | null;
+    correo: string | null;
+    sucursal: string | null;
+    bodega: string | null;
+    codigo_producto: string;
+    nombre_prod: string | null;
+    descripcion_prod: string | null;
+    unidad_medida: string | null;
+    cantidad_ingreso: number;
+    marca: string;
+    origen_prod: string;
+    id_proveedor: string;
+    nombre_proveedor: string;
+    fecha_cad: string | null;
+    nota: string | null;
 }

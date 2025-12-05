@@ -1,6 +1,8 @@
 // src/app/dashboard/inventario/salida/components/SalidaForm.tsx
 "use client";
 
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
@@ -16,15 +18,17 @@ import {
 import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
-import { Salida, SalidaInsert } from "../types";
+import { SalidaInsert } from "../types";
 
 interface Props {
-    salida?: Salida;
     onSuccess: () => void;
 }
 
 export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
+
     const [form, setForm] = useState<SalidaInsert>({
+        id_salida: "",
+        fecha_salida: "",
         auth_uid: "",
         correo: "",
         sucursal: "",
@@ -44,10 +48,12 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
     const [modalMessage, setModalMessage] = useState("");
     const [open, setOpen] = useState(false);
 
-    // Nuevo estado para stock disponible
+    // Stock disponible
     const [stockDisponible, setStockDisponible] = useState<number>(0);
 
-    // Cargar usuario autenticado
+    /* -----------------------------------------------------------
+    CARGAR USUARIO
+    ----------------------------------------------------------- */
     useEffect(() => {
         const loadUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -62,9 +68,12 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         loadUser();
     }, []);
 
-    // Buscar producto y traer nombre y unidad
+    /* -----------------------------------------------------------
+    BUSCAR PRODUCTO
+    ----------------------------------------------------------- */
     const buscarProducto = async (codigo: string) => {
         if (!codigo) return;
+
         const { data } = await supabase
             .from("a_productos")
             .select("*")
@@ -79,7 +88,9 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         }));
     };
 
-    // Consultar stock disponible
+    /* -----------------------------------------------------------
+    CONSULTAR STOCK
+    ----------------------------------------------------------- */
     const consultarStock = async (codigo: string): Promise<number> => {
         if (!codigo) return 0;
 
@@ -93,23 +104,18 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
             .select("cantidad_salida")
             .eq("codigo_producto", codigo);
 
-        const totalIngresos =
-            ingresos?.reduce((acc, x) => acc + Number(x.cantidad_ingreso), 0) || 0;
-
-        const totalSalidas =
-            salidas?.reduce((acc, x) => acc + Number(x.cantidad_salida), 0) || 0;
+        const totalIngresos = ingresos?.reduce((a, b) => a + Number(b.cantidad_ingreso), 0) || 0;
+        const totalSalidas = salidas?.reduce((a, b) => a + Number(b.cantidad_salida), 0) || 0;
 
         return totalIngresos - totalSalidas;
     };
 
-    // Cada vez que cambie el código → consultar stock y producto
     useEffect(() => {
         const fetchStock = async () => {
             if (!form.codigo_producto) {
                 setStockDisponible(0);
                 return;
             }
-
             const stock = await consultarStock(form.codigo_producto);
             setStockDisponible(stock);
         };
@@ -118,42 +124,70 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         buscarProducto(form.codigo_producto);
     }, [form.codigo_producto]);
 
-    // Cambios en inputs
+    /* -----------------------------------------------------------
+    HANDLE CHANGE → todo en mayúsculas
+    ----------------------------------------------------------- */
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value, type } = e.target;
+
+        const parsedValue =
+            type === "number" ? Number(value) : value.toUpperCase();
+
         setForm(prev => ({
             ...prev,
-            [name]: type === "number" ? Number(value) : value,
+            [name]: parsedValue,
         }));
     };
 
-    // Submit del formulario
+    /* -----------------------------------------------------------
+    PAYLOAD FINAL → todo en mayúsculas ANTES DE GUARDAR
+    ----------------------------------------------------------- */
+    const buildInsertPayload = (): SalidaInsert => ({
+        id_salida: crypto.randomUUID(),                // ID automático
+        fecha_salida: new Date().toISOString(),        // Fecha automática
+        auth_uid: form.auth_uid,
+        correo: form.correo,
+        sucursal: form.sucursal.toUpperCase(),
+        codigo_producto: form.codigo_producto.toUpperCase(),
+        nombre_prod: form.nombre_prod?.toUpperCase() || "",
+        descripcion_prod: form.descripcion_prod?.toUpperCase() || "",
+        area_destino: form.area_destino.toUpperCase(),
+        numero_documento: form.numero_documento.toUpperCase(),
+        unidad_medida: form.unidad_medida.toUpperCase(),
+        cantidad_salida: form.cantidad_salida,
+        nota: form.nota?.toUpperCase() || "",
+    });
+
+    /* -----------------------------------------------------------
+    SUBMIT
+    ----------------------------------------------------------- */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        // Validaciones manuales
+        // Validación de campos requeridos
         if (!form.sucursal) {
-            setError("Debes seleccionar una sucursal");
+            setError("Debes seleccionar una sucursal.");
             setLoading(false);
             return;
         }
 
-        if (!form.codigo_producto) {
-            setError("Debes ingresar un código de producto");
+        if (!form.area_destino) {
+            setError("Debes seleccionar un área destino.");
             setLoading(false);
             return;
         }
 
         if (!form.cantidad_salida || form.cantidad_salida <= 0) {
-            setError("Debes ingresar una cantidad válida");
+            setError("Debes ingresar una cantidad válida.");
             setLoading(false);
             return;
         }
 
+        // Validación de stock
         if (form.cantidad_salida > stockDisponible) {
             setError(`No hay suficiente stock. Disponible: ${stockDisponible}`);
             setLoading(false);
@@ -161,11 +195,17 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
         }
 
         try {
-            const { error } = await supabase.from("a_salidas").insert(form);
+            const payload = buildInsertPayload();
+
+            const { error } = await supabase
+                .from("a_salidas")
+                .insert(payload);
+
             if (error) throw error;
 
             setModalMessage("La salida fue registrada correctamente.");
             setShowSuccess(true);
+
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Error al guardar la salida");
         } finally {
@@ -186,10 +226,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                 message={modalMessage}
             />
 
-            <form
-                onSubmit={handleSubmit}
-                className="space-y-6 p-4 md:p-6 border rounded-md bg-white shadow-sm"
-            >
+            <form onSubmit={handleSubmit} className="space-y-6 p-4 md:p-6 border rounded-md bg-white shadow-sm">
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -265,10 +302,11 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
 
                     {/* Area destino */}
                     <div>
-                        <Label>Area destino</Label>
+                        <Label>Área destino</Label>
                         <Select
                             value={form.area_destino}
                             onValueChange={(val) => setForm({ ...form, area_destino: val })}
+                            required
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona un destino" />
@@ -340,7 +378,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         {loading ? "Guardando..." : "Registrar Salida"}
                     </Button>
                 </div>
-            </form>
+            </form >
         </>
     );
 };

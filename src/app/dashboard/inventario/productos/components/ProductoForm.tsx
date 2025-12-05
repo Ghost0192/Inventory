@@ -1,8 +1,9 @@
 // src/app/dashboard/inventario/productos/components/ProductoForm.tsx
+
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Producto, ProductoInsert } from "../types";
+import { ProductoInsert } from "../types";
 import { supabase } from "@/lib/supabaseClient";
 
 import { Input } from "@/components/ui/input";
@@ -15,13 +16,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 
 interface Props {
-    producto?: Producto;  // <-- agregado
     onSuccess: () => void;
 }
 
@@ -30,13 +29,9 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
         auth_uid: "",
         correo: "",
         sucursal: "",
-        bodega: "",
         nombre_prod: "",
         descripcion_prod: "",
-        marca_prod: "",
-        origen_prod: "",
         categoria_prod: "",
-        nombre_proveedor: "",
         unidad_medida: "",
         stock_min: 0,
         activo: true,
@@ -44,11 +39,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Modal
     const [showSuccess, setShowSuccess] = useState(false);
-
-    // Guardar mensaje dinámico
     const [modalMessage, setModalMessage] = useState("");
 
     // Obtener usuario logueado
@@ -66,21 +57,17 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
         getUserData();
     }, []);
 
-    // Construir payload limpio
+    // Construir payload limpio y en mayúsculas
     const buildInsertPayload = () => ({
-        auth_uid: form.auth_uid,
-        correo: form.correo,
-        sucursal: form.sucursal,
-        bodega: form.bodega,
-        nombre_prod: form.nombre_prod,
-        descripcion_prod: form.descripcion_prod,
-        marca_prod: form.marca_prod,
-        origen_prod: form.origen_prod,
-        categoria_prod: form.categoria_prod,
-        nombre_proveedor: form.nombre_proveedor,
-        unidad_medida: form.unidad_medida,
+        auth_uid: form.auth_uid,            // NO CAMBIAR
+        correo: form.correo,                // NO CAMBIAR
+        sucursal: form.sucursal.toUpperCase(),
+        nombre_prod: form.nombre_prod.toUpperCase(),
+        descripcion_prod: form.descripcion_prod?.toUpperCase() || null,
+        categoria_prod: form.categoria_prod?.toUpperCase() || null,
+        unidad_medida: form.unidad_medida?.toUpperCase() || null,
         stock_min: form.stock_min,
-        activo: form.activo,
+        activo: form.activo
     });
 
     // Submit
@@ -95,30 +82,36 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
 
             if (error) throw error;
 
-            // Guardamos mensaje y mostramos modal
             setModalMessage("El producto fue creado correctamente.");
             setShowSuccess(true);
 
         } catch (err: unknown) {
+            // Type guard para obtener el mensaje si es Error
             const msg =
-                err instanceof Error ? err.message : "Error al guardar el producto";
+                err instanceof Error
+                    ? err.message
+                    : "Error al guardar el producto";
             setError(msg);
         } finally {
             setLoading(false);
         }
     };
 
+    // Cambiar valores y convertir a mayúsculas
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value, type } = e.target;
+
+        const upperValue =
+            type === "number" ? Number(value) : value.toUpperCase();
+
         setForm(prev => ({
             ...prev,
-            [name]: type === "number" ? Number(value) : value,
+            [name]: upperValue,
         }));
     };
 
-    // Función que cierra modal y llama al padre
     const handleModalClose = () => {
         setShowSuccess(false);
         onSuccess();
@@ -126,7 +119,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
 
     return (
         <>
-            {/* Modal de confirmación */}
+            {/* Modal */}
             <SuccessModal
                 open={showSuccess}
                 onClose={handleModalClose}
@@ -140,6 +133,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
                     <div>
                         <Label>ID Usuario</Label>
                         <Input value={form.auth_uid} disabled />
@@ -150,38 +144,22 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Input value={form.correo} disabled />
                     </div>
 
-                    <div className="col-span-1">
+                    <div>
                         <Label>Sucursal</Label>
                         <Select
                             value={form.sucursal}
-                            onValueChange={(val) => setForm({ ...form, sucursal: val })}
+                            onValueChange={(val) =>
+                                setForm({ ...form, sucursal: val.toUpperCase() })
+                            }
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una sucursal" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Hijuelas">Hijuelas</SelectItem>
-                                <SelectItem value="Osorno">Osorno</SelectItem>
-                                <SelectItem value="Ica">Ica</SelectItem>
-                                <SelectItem value="Queretaro">Querétaro</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="col-span-1">
-                        <Label>Bodega</Label>
-                        <Select
-                            value={form.bodega}
-                            onValueChange={(val) => setForm({ ...form, bodega: val })}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecciona una bodega" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Invitro Lab">Invitro Lab</SelectItem>
-                                <SelectItem value="Bodega 1">Bodega 1</SelectItem>
-                                <SelectItem value="Bodega 2">Bodega 2</SelectItem>
-                                <SelectItem value="Bodega 3">Bodega 3</SelectItem>
+                                <SelectItem value="HIJUELAS">HIJUELAS</SelectItem>
+                                <SelectItem value="OSORNO">OSORNO</SelectItem>
+                                <SelectItem value="ICA">ICA</SelectItem>
+                                <SelectItem value="QUERETARO">QUERÉTARO</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -193,6 +171,7 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                             value={form.nombre_prod}
                             onChange={handleChange}
                             required
+                            className="uppercase"
                         />
                     </div>
 
@@ -203,88 +182,48 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                             value={form.descripcion_prod}
                             onChange={handleChange}
                             rows={3}
+                            className="uppercase"
                         />
                     </div>
 
-                    <div className="col-span-1">
-                        <Label>Marca</Label>
-                        <Select
-                            value={form.marca_prod}
-                            onValueChange={(val) => setForm({ ...form, marca_prod: val })}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecciona una marca" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Genérico">Genérico</SelectItem>
-                                <SelectItem value="Líder">Líder</SelectItem>
-                                <SelectItem value="Protec">Protec</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
                     <div>
-                        <Label>Origen</Label>
-                        <RadioGroup
-                            value={form.origen_prod}
-                            onValueChange={(val) => setForm({ ...form, origen_prod: val })}
-                        >
-                            <div className="flex items-center space-x-4 my-2">
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="Nacional" id="nacional" />
-                                    <Label htmlFor="nacional">Nacional</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="Internacional" id="internacional" />
-                                    <Label htmlFor="internacional">Internacional</Label>
-                                </div>
-                            </div>
-                        </RadioGroup>
-                    </div>
-
-                    <div className="col-span-1">
                         <Label>Categoría</Label>
                         <Select
                             value={form.categoria_prod}
-                            onValueChange={(val) => setForm({ ...form, categoria_prod: val })}
+                            onValueChange={(val) =>
+                                setForm({ ...form, categoria_prod: val.toUpperCase() })
+                            }
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una categoría" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Contenedor">Contenedor</SelectItem>
-                                <SelectItem value="Agroquimico">Agroquímico</SelectItem>
-                                <SelectItem value="Fertilizante">Fertilizante</SelectItem>
-                                <SelectItem value="Fungicida">Fungicida</SelectItem>
-                                <SelectItem value="Insumo">Insumo</SelectItem>
+                                <SelectItem value="CONTENEDOR">CONTENEDOR</SelectItem>
+                                <SelectItem value="AGROQUIMICO">AGROQUÍMICOS</SelectItem>
+                                <SelectItem value="FERTILIZANTE">FERTILIZANTE</SelectItem>
+                                <SelectItem value="FUNGICIDA">FUNGICIDA</SelectItem>
+                                <SelectItem value="INSUMO">INSUMO</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    <div>
-                        <Label>Nombre Proveedor</Label>
-                        <Input
-                            name="nombre_proveedor"
-                            value={form.nombre_proveedor}
-                            onChange={handleChange}
-                        />
                     </div>
 
                     <div>
                         <Label>Unidad de Medida</Label>
                         <Select
                             value={form.unidad_medida}
-                            onValueChange={(val) => setForm({ ...form, unidad_medida: val })}
+                            onValueChange={(val) =>
+                                setForm({ ...form, unidad_medida: val.toUpperCase() })
+                            }
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona unidad" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Unidad">Unidad</SelectItem>
-                                <SelectItem value="Kilogramos">Kilogramos</SelectItem>
-                                <SelectItem value="Litros">Litros</SelectItem>
-                                <SelectItem value="Gramos">Gramos</SelectItem>
-                                <SelectItem value="Mililitros">Mililitros</SelectItem>
+                                <SelectItem value="UNIDAD">UNIDAD</SelectItem>
+                                <SelectItem value="KILOGRAMOS">KILOGRAMOS</SelectItem>
+                                <SelectItem value="LITROS">LITROS</SelectItem>
+                                <SelectItem value="GRAMOS">GRAMOS</SelectItem>
+                                <SelectItem value="MILILITROS">MILILITROS</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -300,36 +239,10 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                     </div>
                 </div>
 
-                {/* Botón de crear */}
+                {/* Botón de Guardar */}
                 <div className="flex justify-end">
                     <Button type="submit" disabled={loading}>
-                        {loading ? (
-                            <span className="flex items-center gap-2">
-                                <svg
-                                    className="animate-spin h-5 w-5 text-white"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        className="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                        className="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                    ></path>
-                                </svg>
-                                Guardando...
-                            </span>
-                        ) : (
-                            "Crear Producto"
-                        )}
+                        {loading ? "Guardando..." : "Crear Producto"}
                     </Button>
                 </div>
 

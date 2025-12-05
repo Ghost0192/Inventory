@@ -19,14 +19,14 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, QrCode, Search, ChevronLeft, ChevronRight, Edit } from "lucide-react"; // Iconos modernos
+import { ArrowUpDown, Search, ChevronLeft, ChevronRight, Edit } from "lucide-react"; // Iconos modernos
 
 import { QRCreate } from "@/components/ui/common/QRCreate";
 import clsx from "clsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"; // Importa el componente del modal
 
 interface Props {
     productos: Producto[];
-    // Propiedad para permitir la edición desde la tabla (opcional)
     onEdit?: (producto: Producto) => void;
 }
 
@@ -37,26 +37,34 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
     const [sortColumn, setSortColumn] = useState<keyof Producto | null>("nombre_prod");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-    // Función para formatear fechas
-    const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit' 
+    const [openModal, setOpenModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
+    const [formData, setFormData] = useState({
+        nombre_prod: "",
+        descripcion_prod: "",
+        categoria_prod: "",
+        unidad_medida: "",
+        stock_min: 0,
+        activo: true,
     });
 
-    // Filtrado
+    const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+
     const filtered = useMemo(() => {
         const q = search.toLowerCase();
         return productos.filter(
             (p) =>
                 (p.nombre_prod ?? "").toLowerCase().includes(q) ||
+                (p.descripcion_prod ?? "").toLowerCase().includes(q) ||
                 (p.codigo_producto ?? "").toLowerCase().includes(q) ||
-                (p.categoria_prod ?? "").toLowerCase().includes(q) ||
-                (p.marca_prod ?? "").toLowerCase().includes(q)
+                (p.categoria_prod ?? "").toLowerCase().includes(q)
         );
     }, [search, productos]);
 
-    // Ordenamiento
     const sorted = useMemo(() => {
         if (!sortColumn) return filtered;
 
@@ -67,15 +75,12 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
             let comparison = 0;
 
             if (sortColumn === 'stock_min') {
-                // Manejo de números
                 comparison = (Number(aVal) || 0) - (Number(bVal) || 0);
             } else if (sortColumn === 'fecha_reg') {
-                // Manejo de fechas
                 const dateA = aVal ? new Date(aVal as string).getTime() : 0;
                 const dateB = bVal ? new Date(bVal as string).getTime() : 0;
                 comparison = dateA - dateB;
             } else {
-                // Ordenamiento de cadenas (default)
                 const aStr = String(aVal ?? "").toLowerCase();
                 const bStr = String(bVal ?? "").toLowerCase();
                 if (aStr < bStr) comparison = -1;
@@ -86,13 +91,11 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
         });
     }, [filtered, sortColumn, sortOrder]);
 
-    // Paginación
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginated = sorted.slice(start, end);
     const totalPages = Math.ceil(sorted.length / rowsPerPage);
 
-    // Función para alternar orden
     const handleSort = (column: keyof Producto) => {
         if (sortColumn === column) {
             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -103,28 +106,48 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
         setPage(1); // Resetear paginación al ordenar
     };
 
-    // Icono de ordenamiento
     const getSortIcon = (key: keyof Producto) => {
         if (sortColumn !== key) return <ArrowUpDown size={14} className="text-gray-400" />;
-        
+
         return (
-            <ArrowUpDown 
-                size={14} 
+            <ArrowUpDown
+                size={14}
                 className={clsx("text-indigo-600 transition-transform", sortOrder === "desc" && "rotate-180")}
             />
         );
-    }
-    
-    // Definición de columnas
+    };
+
     const columns: { key: keyof Producto, label: string, className?: string }[] = [
+        { key: "fecha_reg", label: "Fecha Reg.", className: "w-[120px] hidden lg:table-cell" },
         { key: "codigo_producto", label: "Código", className: "w-[120px]" },
         { key: "nombre_prod", label: "Producto" },
+        { key: "descripcion_prod", label: "Descripción" },
         { key: "categoria_prod", label: "Categoría", className: "hidden sm:table-cell" },
-        { key: "marca_prod", label: "Marca", className: "hidden md:table-cell" },
         { key: "stock_min", label: "Stock Mín.", className: "w-[100px] text-center" },
-        { key: "fecha_reg", label: "Fecha Reg.", className: "w-[120px] hidden lg:table-cell" },
     ];
 
+    // Abrir modal de edición
+    const handleEdit = (producto: Producto) => {
+        setSelectedProduct(producto);
+        setFormData({
+            nombre_prod: producto.nombre_prod,
+            descripcion_prod: producto.descripcion_prod || "",
+            categoria_prod: producto.categoria_prod || "",
+            unidad_medida: producto.unidad_medida || "",
+            stock_min: producto.stock_min || 0,
+            activo: producto.activo ?? true,
+        });
+        setOpenModal(true);
+    };
+
+    // Guardar cambios del producto
+    const handleSave = () => {
+        if (selectedProduct) {
+            // Aquí puedes manejar la lógica de actualización (llamada a la API o actualizando el estado)
+            console.log("Guardando producto editado:", { ...selectedProduct, ...formData });
+            setOpenModal(false); // Cerrar modal
+        }
+    };
 
     return (
         <div className="space-y-6 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
@@ -132,10 +155,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                 Catálogo de Productos ({productos.length})
             </h1>
 
-            {/* 🔍 Filtros superiores (Diseño elegante) */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                
-                {/* Input de Búsqueda */}
                 <div className="relative w-full sm:max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -145,8 +165,6 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                         className="w-full pl-9 bg-gray-50 border-gray-200"
                     />
                 </div>
-
-                {/* Selección de Filas por Página */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                     <span className="hidden sm:inline">Mostrar</span>
                     <Select
@@ -170,7 +188,6 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                 </div>
             </div>
 
-            {/*Tabla principal */}
             <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <Table>
                     <TableHeader className="bg-gray-100 sticky top-0">
@@ -181,7 +198,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                     className={`cursor-pointer select-none font-semibold transition-colors hover:bg-gray-200 ${col.className}`}
                                     onClick={() => handleSort(col.key)}
                                 >
-                                    <div className="flex items-center gap-1 justify-center ${col.className?.includes('text-center') ? 'justify-center' : ''}`}">
+                                    <div className="flex items-center gap-1 justify-center">
                                         {col.label}
                                         {getSortIcon(col.key)}
                                     </div>
@@ -189,6 +206,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                             ))}
                             <TableHead className="w-auto text-center">Estado</TableHead>
                             <TableHead className="w-[120px] text-center">Acciones</TableHead>
+                            <TableHead className="w-[120px] text-center">Edición</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -196,15 +214,13 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                         {paginated.length > 0 ? (
                             paginated.map((p) => (
                                 <TableRow key={p.id_prod} className="hover:bg-indigo-50/20 transition-colors">
-                                    {/* Mapeo de datos */}
+                                    <TableCell className="text-sm text-gray-500 hidden lg:table-cell">{formatDate(p.fecha_reg)}</TableCell>
                                     <TableCell className="font-mono text-sm text-gray-700">{p.codigo_producto}</TableCell>
                                     <TableCell className="font-medium text-gray-900">{p.nombre_prod}</TableCell>
+                                    <TableCell className="text-gray-600 hidden sm:table-cell">{p.descripcion_prod}</TableCell>
                                     <TableCell className="text-gray-600 hidden sm:table-cell">{p.categoria_prod}</TableCell>
-                                    <TableCell className="text-gray-600 hidden md:table-cell">{p.marca_prod}</TableCell>
                                     <TableCell className="font-bold text-center text-indigo-600">{p.stock_min}</TableCell>
-                                    <TableCell className="text-sm text-gray-500 hidden lg:table-cell">{formatDate(p.fecha_reg)}</TableCell>
-                                    
-                                    {/* Estatus */}
+
                                     <TableCell className="text-center">
                                         <span
                                             className={clsx("px-2 py-1 rounded-full text-xs font-semibold uppercase", {
@@ -215,27 +231,23 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                             {p.activo ? "Activo" : "Inactivo"}
                                         </span>
                                     </TableCell>
-                                    
-                                    {/* QR y Edición */}
-                                    <TableCell className="text-center space-x-2">
-                                        {/* Botón de edición */}
-                                        {onEdit && (
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm"
-                                                onClick={() => onEdit(p)}
-                                                title="Editar Producto"
-                                                className="hover:bg-indigo-100 p-2"
-                                            >
-                                                <Edit className="w-4 h-4 text-indigo-600" />
-                                            </Button>
-                                        )}
 
-                                        {/* Componente QR */}
-                                        <QRCreate 
-                                            codigo={p.codigo_producto ?? ""} 
-                                            nombre={p.nombre_prod ?? ""} 
+                                    <TableCell className="text-center space-x-2">
+                                        <QRCreate
+                                            codigo={p.codigo_producto ?? ""}
+                                            nombre={p.nombre_prod ?? ""}
                                         />
+                                    </TableCell>
+                                    
+                                    <TableCell className="text-center space-x-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleEdit(p)}
+                                        >
+                                            <Edit className="h-4 w-4 mr-1" /> Editar
+                                            
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -248,12 +260,13 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                     No se encontraron productos en el catálogo.
                                 </TableCell>
                             </TableRow>
+                            
                         )}
                     </TableBody>
                 </Table>
             </div>
 
-            {/* 📄 Paginación */}
+            {/* Paginación */}
             <div className="flex justify-between items-center pt-4 text-sm text-gray-600">
                 <span className="text-sm text-gray-500">
                     Mostrando **{start + 1}** - **{Math.min(end, sorted.length)}** de{" "}
@@ -265,22 +278,72 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                         size="sm"
                         disabled={page === 1}
                         onClick={() => setPage((p) => p - 1)}
-                        className="hover:bg-indigo-50 border-gray-300 text-gray-700 transition-colors flex items-center"
                     >
                         <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
                     </Button>
-                    
+
                     <Button
                         variant="outline"
                         size="sm"
                         disabled={page === totalPages}
                         onClick={() => setPage((p) => p + 1)}
-                        className="hover:bg-indigo-50 border-gray-300 text-gray-700 transition-colors flex items-center"
                     >
                         Siguiente <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                 </div>
             </div>
+
+            {/* Modal de edición */}
+            <Dialog open={openModal} onOpenChange={setOpenModal}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Editar Producto</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="flex flex-col">
+                            <label className="text-sm font-medium text-gray-700 mb-1">Nombre Producto</label>
+                            <Input
+                                value={formData.nombre_prod}
+                                onChange={(e) => setFormData({ ...formData, nombre_prod: e.target.value })}
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                            <Input
+                                value={formData.descripcion_prod}
+                                onChange={(e) => setFormData({ ...formData, descripcion_prod: e.target.value })}
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                            <Input
+                                value={formData.categoria_prod}
+                                onChange={(e) => setFormData({ ...formData, categoria_prod: e.target.value })}
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-medium text-gray-700 mb-1">Unidad Medida</label>
+                            <Input
+                                value={formData.unidad_medida}
+                                onChange={(e) => setFormData({ ...formData, unidad_medida: e.target.value })}
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-medium text-gray-700 mb-1">Stock Mínimo</label>
+                            <Input
+                                type="number"
+                                value={formData.stock_min}
+                                onChange={(e) => setFormData({ ...formData, stock_min: +e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="mt-4 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setOpenModal(false)}>Cancelar</Button>
+                        <Button onClick={handleSave}>Guardar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

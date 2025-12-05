@@ -1,3 +1,4 @@
+//src/app/dashboard/inventario/productos/hooks/useProductos.ts
 "use client";
 
 import { useState, useEffect } from 'react';
