@@ -25,6 +25,8 @@ import { QRCreate } from "@/components/ui/common/QRCreate";
 import clsx from "clsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"; // Importa el componente del modal
 
+import { supabase } from "@/lib/supabaseClient";
+
 interface Props {
     productos: Producto[];
     onEdit?: (producto: Producto) => void;
@@ -37,6 +39,9 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
     const [sortColumn, setSortColumn] = useState<keyof Producto | null>("nombre_prod");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
+    const [openDeleteModal, setOpenDeleteModal] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
+
     const [openModal, setOpenModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
     const [formData, setFormData] = useState({
@@ -47,6 +52,12 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
         stock_min: 0,
         activo: true,
     });
+    const [message, setMessage] = useState<string | null>(null); // Estado para mensajes de éxito/error
+
+    const handleDeleteRequest = (producto: Producto) => {
+        setProductToDelete(producto);
+        setOpenDeleteModal(true);
+    };
 
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-ES', {
         year: 'numeric',
@@ -126,7 +137,6 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
         { key: "stock_min", label: "Stock Mín.", className: "w-[100px] text-center" },
     ];
 
-    // Abrir modal de edición
     const handleEdit = (producto: Producto) => {
         setSelectedProduct(producto);
         setFormData({
@@ -140,17 +150,63 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
         setOpenModal(true);
     };
 
-    // Guardar cambios del producto
-    const handleSave = () => {
+    const handleDeleteConfirm = async () => {
+        if (!productToDelete) return;
+
+        const { error } = await supabase
+            .from("a_productos")
+            .delete()
+            .eq("id_prod", productToDelete.id_prod);
+
+        if (error) {
+            console.error("Error eliminando:", error);
+            return;
+        }
+
+        const index = productos.findIndex(p => p.id_prod === productToDelete.id_prod);
+        if (index !== -1) {
+            productos.splice(index, 1); // mutación controlada
+        }
+
+        setOpenDeleteModal(false);
+        setProductToDelete(null);
+    };
+
+    const handleSave = async () => {
         if (selectedProduct) {
-            // Aquí puedes manejar la lógica de actualización (llamada a la API o actualizando el estado)
-            console.log("Guardando producto editado:", { ...selectedProduct, ...formData });
-            setOpenModal(false); // Cerrar modal
+            const updatedProduct = {
+                ...selectedProduct,
+                ...formData,
+                nombre_prod: formData.nombre_prod.toUpperCase(),
+                descripcion_prod: formData.descripcion_prod.toUpperCase(),
+                categoria_prod: formData.categoria_prod.toUpperCase(),
+                unidad_medida: formData.unidad_medida.toUpperCase(),
+            };
+
+            const { error } = await supabase
+                .from("a_productos")
+                .update(updatedProduct)
+                .eq("id_prod", selectedProduct.id_prod);
+
+            if (error) {
+                setMessage("Error al editar el producto. Intente nuevamente.");
+                console.error("Error al editar:", error);
+            } else {
+                setMessage("Producto editado con éxito.");
+                setOpenModal(false);
+            }
         }
     };
 
     return (
         <div className="space-y-6 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
+            {/* Mensaje de éxito o error */}
+            {message && (
+                <div className="p-4 bg-blue-100 text-blue-700 rounded-md">
+                    {message}
+                </div>
+            )}
+
             <h1 className="text-xl font-bold text-gray-800 tracking-tight">
                 Catálogo de Productos ({productos.length})
             </h1>
@@ -213,7 +269,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                     <TableBody>
                         {paginated.length > 0 ? (
                             paginated.map((p) => (
-                                <TableRow key={p.id_prod} className="hover:bg-indigo-50/20 transition-colors">
+                                <TableRow key={p.id_prod} className="hover:bg-indigo-50/20 transition-colors scroll-auto">
                                     <TableCell className="text-sm text-gray-500 hidden lg:table-cell">{formatDate(p.fecha_reg)}</TableCell>
                                     <TableCell className="font-mono text-sm text-gray-700">{p.codigo_producto}</TableCell>
                                     <TableCell className="font-medium text-gray-900">{p.nombre_prod}</TableCell>
@@ -238,7 +294,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                             nombre={p.nombre_prod ?? ""}
                                         />
                                     </TableCell>
-                                    
+
                                     <TableCell className="text-center space-x-2">
                                         <Button
                                             variant="outline"
@@ -246,7 +302,14 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                             onClick={() => handleEdit(p)}
                                         >
                                             <Edit className="h-4 w-4 mr-1" /> Editar
-                                            
+                                        </Button>
+
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => handleDeleteRequest(p)}
+                                        >
+                                            Eliminar
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -260,7 +323,6 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                     No se encontraron productos en el catálogo.
                                 </TableCell>
                             </TableRow>
-                            
                         )}
                     </TableBody>
                 </Table>
@@ -304,28 +366,28 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                             <label className="text-sm font-medium text-gray-700 mb-1">Nombre Producto</label>
                             <Input
                                 value={formData.nombre_prod}
-                                onChange={(e) => setFormData({ ...formData, nombre_prod: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, nombre_prod: e.target.value.toUpperCase() })}
                             />
                         </div>
                         <div className="flex flex-col">
                             <label className="text-sm font-medium text-gray-700 mb-1">Descripción</label>
                             <Input
                                 value={formData.descripcion_prod}
-                                onChange={(e) => setFormData({ ...formData, descripcion_prod: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, descripcion_prod: e.target.value.toUpperCase() })}
                             />
                         </div>
                         <div className="flex flex-col">
                             <label className="text-sm font-medium text-gray-700 mb-1">Categoría</label>
                             <Input
                                 value={formData.categoria_prod}
-                                onChange={(e) => setFormData({ ...formData, categoria_prod: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, categoria_prod: e.target.value.toUpperCase() })}
                             />
                         </div>
                         <div className="flex flex-col">
                             <label className="text-sm font-medium text-gray-700 mb-1">Unidad Medida</label>
                             <Input
                                 value={formData.unidad_medida}
-                                onChange={(e) => setFormData({ ...formData, unidad_medida: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, unidad_medida: e.target.value.toUpperCase() })}
                             />
                         </div>
                         <div className="flex flex-col">
@@ -343,6 +405,33 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                         <Button onClick={handleSave}>Guardar</Button>
                     </DialogFooter>
                 </DialogContent>
+
+                {/* Modal de eliminación */}
+                <Dialog open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-red-600">
+                                Confirmar eliminación
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        <p className="text-gray-700 text-sm">
+                            ¿Seguro que deseas eliminar el producto{" "}
+                            <span className="font-bold">{productToDelete?.nombre_prod}</span>?
+                            Esta acción no se puede deshacer.
+                        </p>
+
+                        <DialogFooter className="mt-6">
+                            <Button variant="outline" onClick={() => setOpenDeleteModal(false)}>
+                                Cancelar
+                            </Button>
+                            <Button variant="destructive" onClick={handleDeleteConfirm}>
+                                Eliminar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
             </Dialog>
         </div>
     );

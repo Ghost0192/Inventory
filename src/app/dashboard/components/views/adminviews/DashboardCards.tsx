@@ -183,7 +183,7 @@ const DashboardCards = () => {
                             </CardHeader>
 
                             <CardContent className="flex flex-col justify-center items-center p-4 pt-2">
-                                <div className="text-8xl font-bold tracking-tight text-gray-800 dark:text-white">
+                                <div className="text-5xl font-bold tracking-tight text-gray-800 dark:text-white">
                                     {/* Valor Principal (ej. 20K, 145K) */}
                                     {stats[style.key].toLocaleString()}
                                 </div>
