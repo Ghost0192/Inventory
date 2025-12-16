@@ -1,9 +1,8 @@
-//src/app/dashboard/inventario/entrada/components/IngresoTable.tsx
+// src/app/dashboard/inventario/entrada/components/IngresoTable.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";
-// CORRECCIÓN 1: Eliminamos la importación de IngresoEdit y formatDateToInput ya que no se usan
-import { Ingreso } from "../types"; 
+import { Ingreso, IngresoEdit } from "../types"; // Importamos IngresoEdit para el estado
 import {
     Table,
     TableBody,
@@ -22,24 +21,53 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Edit2 } from "lucide-react";
+// CORRECCIÓN: Reincorporar el Modal
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label"; // Añadir Label para el formulario del Modal
+import { supabase } from "@/lib/supabaseClient"; // Necesario para la función de guardado
+
+// Función auxiliar para formatear una fecha ISO a YYYY-MM-DD (para el input del Modal)
+const formatDateToInput = (dateStr: string | null): string => {
+    if (!dateStr) return "";
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return "";
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    } catch (e) {
+        return "";
+    }
+};
 
 interface Props {
-    ingresos: Ingreso[];
-    onEditSelect: (ingreso: Ingreso) => void; 
+    ingresos: Ingreso[]; // Solo necesitamos ingresos
+    // CORRECCIÓN: Eliminamos onEditSelect
 }
 
-// CORRECCIÓN 2: Eliminamos la función formatDateToInput ya que no se utiliza
-/* const formatDateToInput = (dateStr: string | null): string => { 
-    // ...
-};
-*/
-
-export const IngresoTable: React.FC<Props> = ({ ingresos, onEditSelect }) => {
+export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
     const [search, setSearch] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [page, setPage] = useState(1);
     const [sortColumn, setSortColumn] = useState<keyof Ingreso | null>(null);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+    const [loadingSave, setLoadingSave] = useState(false); // Estado para el botón de guardar
+
+    // CORRECCIÓN: Reincorporar el estado del Modal de edición
+    const [openModal, setOpenModal] = useState(false);
+    const [selectedIngreso, setSelectedIngreso] = useState<Ingreso | null>(null);
+
+    // Estado del formulario de edición local
+    const [editForm, setEditForm] = useState({
+        nombre_prod: "",
+        descripcion_prod: "",
+        cantidad_ingreso: 0,
+        marca: "",
+        origen_prod: "",
+        nombre_proveedor: "",
+        fecha_cad: "",
+    });
 
     // Filtro
     const filtered = useMemo(() => {
@@ -76,14 +104,14 @@ export const IngresoTable: React.FC<Props> = ({ ingresos, onEditSelect }) => {
     const paginated = sorted.slice(start, end);
     const totalPages = Math.ceil(sorted.length / rowsPerPage);
 
-    // Columnas de la tabla
+    // Columnas de la tabla con el encabezado de "Descripción de producto"
     const tableColumns = [
         { key: "fecha_ing", label: "Fecha registro" },
         { key: "sucursal", label: "Sucursal" },
         { key: "bodega", label: "Bodega" },
         { key: "codigo_producto", label: "Código" },
         { key: "nombre_prod", label: "Nombre" },
-        { key: "descripcion_prod", label: "Descripción Producto" },
+        { key: "descripcion_prod", label: "Descripción de producto" }, // Encabezado corregido
         { key: "unidad_medida", label: "Unidad" },
         { key: "cantidad_ingreso", label: "Cantidad" },
         { key: "marca", label: "Marca" },
@@ -104,9 +132,59 @@ export const IngresoTable: React.FC<Props> = ({ ingresos, onEditSelect }) => {
         }
     };
 
-    // Función que notifica al padre para cargar el formulario de edición
+    // CORRECCIÓN: Abrir Modal de edición
     const handleEdit = (ingreso: Ingreso) => {
-        onEditSelect(ingreso); 
+        setSelectedIngreso(ingreso);
+        
+        // Inicializar editForm con los datos del ingreso (usando IngresoEdit para la coerción)
+        const currentIngreso = ingreso as IngresoEdit;
+
+        setEditForm({
+            nombre_prod: currentIngreso.nombre_prod ?? "",
+            descripcion_prod: currentIngreso.descripcion_prod ?? "",
+            cantidad_ingreso: currentIngreso.cantidad_ingreso ?? 0,
+            marca: currentIngreso.marca ?? "",
+            origen_prod: currentIngreso.origen_prod ?? "",
+            nombre_proveedor: currentIngreso.nombre_proveedor ?? "",
+            // CORRECCIÓN: Formatear la fecha para el input type="date"
+            fecha_cad: formatDateToInput(currentIngreso.fecha_cad),
+        });
+        setOpenModal(true);
+    };
+
+    // CORRECCIÓN: Lógica para Guardar cambios (Update a Supabase)
+    const handleSave = async () => {
+        if (!selectedIngreso) return;
+        setLoadingSave(true);
+        
+        // Crear payload solo con los campos editables
+        const payload = {
+            nombre_prod: editForm.nombre_prod?.toUpperCase() || null,
+            descripcion_prod: editForm.descripcion_prod?.toUpperCase() || null,
+            cantidad_ingreso: Number(editForm.cantidad_ingreso),
+            marca: editForm.marca?.toUpperCase() || null,
+            origen_prod: editForm.origen_prod?.toUpperCase() || null,
+            nombre_proveedor: editForm.nombre_proveedor?.toUpperCase() || null,
+            fecha_cad: editForm.fecha_cad || null,
+        };
+
+        try {
+            const { error } = await supabase.from("a_ingresos")
+                .update(payload)
+                .eq('id_entr', selectedIngreso.id_entr);
+
+            if (error) throw error;
+            
+            // Éxito: Cerrar modal y notificar al padre para recargar la tabla (si fuera necesario)
+            // Ya que no tenemos un onSuccess, solo actualizamos la UI local si es necesario o esperamos el refresh global.
+            setOpenModal(false);
+            
+        } catch (error) {
+            console.error("Error al actualizar el ingreso:", error);
+            alert("Error al guardar los cambios.");
+        } finally {
+            setLoadingSave(false);
+        }
     };
 
     // Formatear fecha (DD/MM/YYYY) para la visualización en la tabla
@@ -152,7 +230,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos, onEditSelect }) => {
 
             {/* Tabla con scroll horizontal */}
             <div className="overflow-x-auto rounded-md border">
-                <Table className="min-w-[1200px]"> 
+                <Table className="min-w-[300px]"> 
                     <TableHeader>
                         <TableRow>
                             {tableColumns.map((col) => (
@@ -192,6 +270,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos, onEditSelect }) => {
                                     <TableCell className="w-36 truncate">{i.nombre_proveedor}</TableCell>
                                     <TableCell className="w-24 truncate">{formatDate(i.fecha_cad)}</TableCell>
                                     <TableCell className="w-20">
+                                        {/* Botón de editar (activa el modal local) */}
                                         <Button size="icon" variant="outline" onClick={() => handleEdit(i)}>
                                             <Edit2 size={16} />
                                         </Button>
@@ -223,6 +302,98 @@ export const IngresoTable: React.FC<Props> = ({ ingresos, onEditSelect }) => {
                     </Button>
                 </div>
             </div>
+
+            {/* Modal de edición (Reincorporado) */}
+            <Dialog open={openModal} onOpenChange={setOpenModal}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Editar Ingreso: {selectedIngreso?.codigo_producto}</DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4">
+                        {/* Campo Nombre Producto */}
+                        <div className="flex flex-col">
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Nombre Producto</Label>
+                            <Input
+                                placeholder="Nombre producto"
+                                value={editForm.nombre_prod}
+                                onChange={(e) => setEditForm({ ...editForm, nombre_prod: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Campo Descripción */}
+                        <div className="flex flex-col">
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Descripción</Label>
+                            <Input
+                                placeholder="Descripción"
+                                value={editForm.descripcion_prod}
+                                onChange={(e) => setEditForm({ ...editForm, descripcion_prod: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Campo Cantidad */}
+                        <div className="flex flex-col">
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Cantidad</Label>
+                            <Input
+                                type="number"
+                                placeholder="Cantidad"
+                                value={editForm.cantidad_ingreso}
+                                onChange={(e) => setEditForm({ ...editForm, cantidad_ingreso: Number(e.target.value) })}
+                            />
+                        </div>
+
+                        {/* Campo Marca */}
+                        <div className="flex flex-col">
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Marca</Label>
+                            <Input
+                                placeholder="Marca"
+                                value={editForm.marca}
+                                onChange={(e) => setEditForm({ ...editForm, marca: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Campo Origen */}
+                        <div className="flex flex-col">
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Origen</Label>
+                            <Input
+                                placeholder="Origen"
+                                value={editForm.origen_prod}
+                                onChange={(e) => setEditForm({ ...editForm, origen_prod: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Campo Proveedor */}
+                        <div className="flex flex-col">
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Nombre Proveedor</Label>
+                            <Input
+                                placeholder="Proveedor"
+                                value={editForm.nombre_proveedor}
+                                onChange={(e) => setEditForm({ ...editForm, nombre_proveedor: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Campo Fecha Caducidad */}
+                        <div className="flex flex-col">
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Fecha Caducidad</Label>
+                            <Input
+                                type="date"
+                                placeholder="Fecha caducidad"
+                                value={editForm.fecha_cad}
+                                onChange={(e) => setEditForm({ ...editForm, fecha_cad: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="mt-4 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setOpenModal(false)} disabled={loadingSave}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleSave} disabled={loadingSave}>
+                            {loadingSave ? 'Guardando...' : 'Guardar Cambios'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

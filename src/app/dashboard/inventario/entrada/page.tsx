@@ -1,24 +1,22 @@
 // src/app/dashboard/inventario/entrada/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React from "react"; // Ya no se necesita useState
 import { useIngresos } from "./hooks/useIngresos";
 import { IngresoForm } from "./components/IngresoForm";
 import { IngresoTable } from "./components/IngresoTable";
-import { Ingreso } from "./types";
+// Ya no se necesita el tipo Ingreso aquí
 
 const EntradaPage = () => {
-    // Asumimos que useIngresos devuelve Ingreso[] (que ya corregimos para ser completo)
+    // Eliminamos const [selectedIngreso, setSelectedIngreso]
     const { ingresos, loading, error, fetchIngresos } = useIngresos();
-    const [selectedIngreso, setSelectedIngreso] = useState<Ingreso | null>(null);
-
-    // Función para manejar la selección de un ingreso desde la tabla
+    
+    // Eliminamos handleEditSelection
+    /*
     const handleEditSelection = (ingreso: Ingreso) => {
-        setSelectedIngreso(ingreso);
-        // Opcional: Desplazarse al formulario al seleccionar
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // ...
     };
-
+    */
 
     if (loading) return <p className="text-center py-4">Cargando ingresos...</p>;
     if (error) return <p className="text-center py-4 text-red-500">Error: {error}</p>;
@@ -30,11 +28,10 @@ const EntradaPage = () => {
             </h1>
 
             <IngresoForm
-                // Ahora es válido porque IngresoForm aceptará esta prop
-                ingreso={selectedIngreso || undefined}
+                // CORRECCIÓN 1: Eliminamos la prop 'ingreso' que causa el error
                 onSuccess={() => {
                     fetchIngresos();
-                    setSelectedIngreso(null); // Limpiar la selección después de guardar
+                    // CORRECCIÓN 2: Eliminamos la limpieza de selectedIngreso
                 }}
             />
 
@@ -42,7 +39,7 @@ const EntradaPage = () => {
             <div className="hidden md:block">
                 <IngresoTable 
                     ingresos={ingresos}
-                    onEditSelect={handleEditSelection}
+                    // CORRECCIÓN 3: Eliminamos la prop onEditSelect que causa el error
                 />
             </div>
         </div>
