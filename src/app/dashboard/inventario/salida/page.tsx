@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
 import { useSalidas } from "./hooks/useSalidas";
 import { SalidaForm } from "./components/SalidaForm";
 import { SalidaTable } from "./components/SalidaTable"; // opcional
-import { Salida } from "./types";
 
 const SalidaPage = () => {
     const { salidas, loading, error, fetchSalidas } = useSalidas();
-    const [selectedSalida, setSelectedSalida] = useState<Salida | null>(null);
 
     if (loading) return <p className="text-center py-4">Cargando salidas...</p>;
     if (error) return <p className="text-center py-4 text-red-500">Error: {error}</p>;
@@ -20,10 +17,8 @@ const SalidaPage = () => {
             </h1>
 
             <SalidaForm
-                salida={selectedSalida || undefined}
                 onSuccess={() => {
                     fetchSalidas();
-                    setSelectedSalida(null);
                 }}
             />
 

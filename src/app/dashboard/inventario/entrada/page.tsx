@@ -8,16 +8,8 @@ import { IngresoTable } from "./components/IngresoTable";
 // Ya no se necesita el tipo Ingreso aquí
 
 const EntradaPage = () => {
-    // Eliminamos const [selectedIngreso, setSelectedIngreso]
     const { ingresos, loading, error, fetchIngresos } = useIngresos();
     
-    // Eliminamos handleEditSelection
-    /*
-    const handleEditSelection = (ingreso: Ingreso) => {
-        // ...
-    };
-    */
-
     if (loading) return <p className="text-center py-4">Cargando ingresos...</p>;
     if (error) return <p className="text-center py-4 text-red-500">Error: {error}</p>;
 
