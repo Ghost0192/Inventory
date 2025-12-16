@@ -1,9 +1,7 @@
-// src/app/dashboard/inventario/productos/components/ProductoForm.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProductoInsert } from "../types";
+import { Producto, ProductoInsert } from "../types";
 import { supabase } from "@/lib/supabaseClient";
 
 import { Input } from "@/components/ui/input";
@@ -21,10 +19,11 @@ import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 
 interface Props {
+    producto?: Producto;      // 👈 crear / editar
     onSuccess: () => void;
 }
 
-export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
+export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     const [form, setForm] = useState<ProductoInsert>({
         auth_uid: "",
         correo: "",
@@ -42,7 +41,9 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
     const [showSuccess, setShowSuccess] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
 
-    // Obtener usuario logueado
+    /* ===============================
+       Obtener usuario logueado
+    =============================== */
     useEffect(() => {
         const getUserData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -57,36 +58,70 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
         getUserData();
     }, []);
 
-    // Construir payload limpio y en mayúsculas
-    const buildInsertPayload = () => ({
-        auth_uid: form.auth_uid,            // NO CAMBIAR
-        correo: form.correo,                // NO CAMBIAR
+    /* ===============================
+       Cargar datos si es edición
+    =============================== */
+    useEffect(() => {
+        if (producto) {
+            setForm({
+                auth_uid: producto.auth_uid ?? "",
+                correo: producto.correo ?? "",
+                sucursal: producto.sucursal ?? "",
+                nombre_prod: producto.nombre_prod,
+                descripcion_prod: producto.descripcion_prod ?? "",
+                categoria_prod: producto.categoria_prod ?? "",
+                unidad_medida: producto.unidad_medida ?? "",
+                stock_min: producto.stock_min ?? 0,
+                activo: producto.activo ?? true,
+            });
+        }
+    }, [producto]);
+
+    /* ===============================
+       Payload limpio (MAYÚSCULAS)
+    =============================== */
+    const buildPayload = () => ({
+        auth_uid: form.auth_uid,
+        correo: form.correo,
         sucursal: form.sucursal.toUpperCase(),
         nombre_prod: form.nombre_prod.toUpperCase(),
         descripcion_prod: form.descripcion_prod?.toUpperCase() || null,
         categoria_prod: form.categoria_prod?.toUpperCase() || null,
         unidad_medida: form.unidad_medida?.toUpperCase() || null,
         stock_min: form.stock_min,
-        activo: form.activo
+        activo: form.activo,
     });
 
-    // Submit
+    /* ===============================
+       Submit (INSERT / UPDATE)
+    =============================== */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const payload = buildInsertPayload();
-            const { error } = await supabase.from("a_productos").insert(payload);
+            const payload = buildPayload();
 
-            if (error) throw error;
+            if (producto) {
+                const { error } = await supabase
+                    .from("a_productos")
+                    .update(payload)
+                    .eq("id_prod", producto.id_prod);
 
-            setModalMessage("El producto fue creado correctamente.");
+                if (error) throw error;
+                setModalMessage("El producto fue actualizado correctamente.");
+            } else {
+                const { error } = await supabase
+                    .from("a_productos")
+                    .insert(payload);
+
+                if (error) throw error;
+                setModalMessage("El producto fue creado correctamente.");
+            }
+
             setShowSuccess(true);
-
         } catch (err: unknown) {
-            // Type guard para obtener el mensaje si es Error
             const msg =
                 err instanceof Error
                     ? err.message
@@ -97,18 +132,17 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
         }
     };
 
-    // Cambiar valores y convertir a mayúsculas
+    /* ===============================
+       Handlers
+    =============================== */
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value, type } = e.target;
 
-        const upperValue =
-            type === "number" ? Number(value) : value.toUpperCase();
-
         setForm(prev => ({
             ...prev,
-            [name]: upperValue,
+            [name]: type === "number" ? Number(value) : value.toUpperCase(),
         }));
     };
 
@@ -117,9 +151,11 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
         onSuccess();
     };
 
+    /* ===============================
+       Render
+    =============================== */
     return (
         <>
-            {/* Modal */}
             <SuccessModal
                 open={showSuccess}
                 onClose={handleModalClose}
@@ -237,15 +273,18 @@ export const ProductoForm: React.FC<Props> = ({ onSuccess }) => {
                             onChange={handleChange}
                         />
                     </div>
+
                 </div>
 
-                {/* Botón de Guardar */}
                 <div className="flex justify-end">
                     <Button type="submit" disabled={loading}>
-                        {loading ? "Guardando..." : "Crear Producto"}
+                        {loading
+                            ? "Guardando..."
+                            : producto
+                                ? "Actualizar Producto"
+                                : "Crear Producto"}
                     </Button>
                 </div>
-
             </form>
         </>
     );
