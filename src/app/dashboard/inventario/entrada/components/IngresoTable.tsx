@@ -2,7 +2,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { IngresoEdit } from "../types";
+// CORRECCIÓN 1: Eliminamos la importación de IngresoEdit y formatDateToInput ya que no se usan
+import { Ingreso } from "../types"; 
 import {
     Table,
     TableBody,
@@ -21,33 +22,24 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Edit2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface Props {
-    ingresos: IngresoEdit[]; // Cambié ingresosE por ingresos
+    ingresos: Ingreso[];
+    onEditSelect: (ingreso: Ingreso) => void; 
 }
 
-export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
+// CORRECCIÓN 2: Eliminamos la función formatDateToInput ya que no se utiliza
+/* const formatDateToInput = (dateStr: string | null): string => { 
+    // ...
+};
+*/
+
+export const IngresoTable: React.FC<Props> = ({ ingresos, onEditSelect }) => {
     const [search, setSearch] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [page, setPage] = useState(1);
-    const [sortColumn, setSortColumn] = useState<keyof IngresoEdit | null>(null);
+    const [sortColumn, setSortColumn] = useState<keyof Ingreso | null>(null);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-
-    // Modal de edición
-    const [openModal, setOpenModal] = useState(false);
-    const [selectedIngreso, setSelectedIngreso] = useState<IngresoEdit | null>(null);
-
-    // Edit form state
-    const [editForm, setEditForm] = useState({
-        nombre_prod: "",
-        descripcion_prod: "",
-        cantidad_ingreso: 0,
-        marca: "",
-        origen_prod: "",
-        nombre_proveedor: "",
-        fecha_cad: "",
-    });
 
     // Filtro
     const filtered = useMemo(() => {
@@ -84,8 +76,26 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
     const paginated = sorted.slice(start, end);
     const totalPages = Math.ceil(sorted.length / rowsPerPage);
 
+    // Columnas de la tabla
+    const tableColumns = [
+        { key: "fecha_ing", label: "Fecha registro" },
+        { key: "sucursal", label: "Sucursal" },
+        { key: "bodega", label: "Bodega" },
+        { key: "codigo_producto", label: "Código" },
+        { key: "nombre_prod", label: "Nombre" },
+        { key: "descripcion_prod", label: "Descripción Producto" },
+        { key: "unidad_medida", label: "Unidad" },
+        { key: "cantidad_ingreso", label: "Cantidad" },
+        { key: "marca", label: "Marca" },
+        { key: "origen_prod", label: "Origen" },
+        { key: "nombre_proveedor", label: "Nombre Proveedor" },
+        { key: "fecha_cad", label: "Fecha Caducidad" },
+        { key: "editar", label: "Editar" },
+    ];
+    const totalColumns = tableColumns.length;
+
     // Alternar orden
-    const handleSort = (column: keyof IngresoEdit) => {
+    const handleSort = (column: keyof Ingreso) => {
         if (sortColumn === column) {
             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
         } else {
@@ -94,33 +104,16 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
         }
     };
 
-    // Abrir modal con ingreso seleccionado
-    const handleEdit = (ingreso: IngresoEdit) => {
-        setSelectedIngreso(ingreso);
-        setEditForm({
-            nombre_prod: ingreso.nombre_prod ?? "",
-            descripcion_prod: ingreso.descripcion_prod ?? "",
-            cantidad_ingreso: ingreso.cantidad_ingreso ?? 0,
-            marca: ingreso.marca ?? "",
-            origen_prod: ingreso.origen_prod ?? "",
-            nombre_proveedor: ingreso.nombre_proveedor ?? "",
-            fecha_cad: ingreso.fecha_cad ?? "",
-        });
-        setOpenModal(true);
+    // Función que notifica al padre para cargar el formulario de edición
+    const handleEdit = (ingreso: Ingreso) => {
+        onEditSelect(ingreso); 
     };
 
-    // Guardar cambios
-    const handleSave = () => {
-        if (!selectedIngreso) return;
-        // Aquí puedes hacer la llamada a la API o actualizar el estado local
-        console.log("Guardar cambios:", { id: selectedIngreso.id_entr, ...editForm });
-        setOpenModal(false);
-    };
-
-    // Formatear fecha (DD/MM/YYYY)
+    // Formatear fecha (DD/MM/YYYY) para la visualización en la tabla
     const formatDate = (dateStr: string | null) => {
         if (!dateStr) return "-";
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return "-";
         return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
     };
 
@@ -139,7 +132,10 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
 
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500">Ver</span>
-                    <Select value={rowsPerPage.toString()} onValueChange={(val) => setRowsPerPage(Number(val))}>
+                    <Select value={rowsPerPage.toString()} onValueChange={(val) => {
+                        setRowsPerPage(Number(val));
+                        setPage(1);
+                    }}>
                         <SelectTrigger className="w-auto">
                             <SelectValue placeholder="10" />
                         </SelectTrigger>
@@ -156,28 +152,14 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
 
             {/* Tabla con scroll horizontal */}
             <div className="overflow-x-auto rounded-md border">
-                <Table className="min-w-[100px]">
+                <Table className="min-w-[1200px]"> 
                     <TableHeader>
                         <TableRow>
-                            {[
-                                { key: "fecha_ing", label: "Fecha registro" },
-                                { key: "sucursal", label: "Sucursal" },
-                                { key: "bodega", label: "Bodega" },
-                                { key: "codigo_producto", label: "Código" },
-                                { key: "nombre_prod", label: "Nombre" },
-                                { key: "descripcion_prod", label: "Descripción Producto" },
-                                { key: "unidad_medida", label: "Unidad" },
-                                { key: "cantidad_ingreso", label: "Cantidad" },
-                                { key: "marca", label: "Marca" },
-                                { key: "origen_prod", label: "Origen" },
-                                { key: "nombre_proveedor", label: "Nombre Proveedor" },
-                                { key: "fecha_cad", label: "Fecha Caducidad" },
-                                { key: "editar", label: "Editar" },
-                            ].map((col) => (
+                            {tableColumns.map((col) => (
                                 <TableHead
                                     key={col.key}
                                     className="cursor-pointer select-none"
-                                    onClick={() => col.key !== "editar" && handleSort(col.key as keyof IngresoEdit)}
+                                    onClick={() => col.key !== "editar" && handleSort(col.key as keyof Ingreso)}
                                 >
                                     <div className="flex items-center gap-1">
                                         {col.label}
@@ -210,16 +192,15 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                                     <TableCell className="w-36 truncate">{i.nombre_proveedor}</TableCell>
                                     <TableCell className="w-24 truncate">{formatDate(i.fecha_cad)}</TableCell>
                                     <TableCell className="w-20">
-                                        {/*Botón de editar
-                                        <Button size="sm" variant="outline" onClick={() => handleEdit(i)}>
+                                        <Button size="icon" variant="outline" onClick={() => handleEdit(i)}>
                                             <Edit2 size={16} />
-                                        </Button>*/}
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={15} className="text-center py-6 text-gray-500">
+                                <TableCell colSpan={totalColumns} className="text-center py-6 text-gray-500">
                                     No se encontraron ingresos.
                                 </TableCell>
                             </TableRow>
@@ -237,94 +218,11 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                     <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
                         Anterior
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+                    <Button variant="outline" size="sm" disabled={page === totalPages || totalPages === 0} onClick={() => setPage((p) => p + 1)}>
                         Siguiente
                     </Button>
                 </div>
             </div>
-
-            {/* Modal de edición */}
-            <Dialog open={openModal} onOpenChange={setOpenModal}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Editar Ingreso</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        {/* Todos los campos del formulario */}
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Nombre Producto</label>
-                            <Input
-                                placeholder="Nombre producto"
-                                value={editForm.nombre_prod}
-                                onChange={(e) => setEditForm({ ...editForm, nombre_prod: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                            <Input
-                                placeholder="Descripción"
-                                value={editForm.descripcion_prod}
-                                onChange={(e) => setEditForm({ ...editForm, descripcion_prod: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                            <Input
-                                type="number"
-                                placeholder="Cantidad"
-                                value={editForm.cantidad_ingreso}
-                                onChange={(e) => setEditForm({ ...editForm, cantidad_ingreso: Number(e.target.value) })}
-                            />
-                        </div>
-
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Marca</label>
-                            <Input
-                                placeholder="Marca"
-                                value={editForm.marca}
-                                onChange={(e) => setEditForm({ ...editForm, marca: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Origen</label>
-                            <Input
-                                placeholder="Origen"
-                                value={editForm.origen_prod}
-                                onChange={(e) => setEditForm({ ...editForm, origen_prod: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                            <Input
-                                placeholder="Proveedor"
-                                value={editForm.nombre_proveedor}
-                                onChange={(e) => setEditForm({ ...editForm, nombre_proveedor: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="flex flex-col">
-                            <label className="text-sm font-medium text-gray-700 mb-1">Fecha Caducidad</label>
-                            <Input
-                                type="date"
-                                placeholder="Fecha caducidad"
-                                value={editForm.fecha_cad}
-                                onChange={(e) => setEditForm({ ...editForm, fecha_cad: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <DialogFooter className="mt-4 flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setOpenModal(false)}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleSave}>Guardar</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 };

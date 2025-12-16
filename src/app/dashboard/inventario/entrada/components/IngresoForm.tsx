@@ -17,29 +17,55 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
-import { IngresoInsert } from "../types";
+// CORRECCIÓN: Importar Ingreso para la prop de edición
+import { IngresoInsert, Ingreso } from "../types"; 
+
+// Estado inicial limpio del formulario (sin campos de usuario)
+const initialFormState: Omit<IngresoInsert, 'auth_uid' | 'correo'> = {
+    sucursal: "",
+    bodega: "",
+    codigo_producto: "",
+    nombre_prod: "",
+    descripcion_prod: null, // Tipo null para campos opcionales de la DB
+    unidad_medida: null, // Tipo null para campos opcionales de la DB
+    cantidad_ingreso: 0,
+    marca: null,
+    origen_prod: null,
+    id_proveedor: null,
+    nombre_proveedor: null,
+    fecha_cad: null,
+    nota: null,
+};
+
+// Función auxiliar para formatear una fecha a YYYY-MM-DD para el input[type="date"]
+const formatDateToInput = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return "";
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return "";
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    } catch {
+        return "";
+    }
+};
+
 
 interface Props {
     onSuccess: () => void;
+    // CORRECCIÓN 1: Agregar la prop 'ingreso' para el modo edición
+    ingreso?: Ingreso; 
 }
 
-export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
-    const [form, setForm] = useState<IngresoInsert>({
-        auth_uid: "",
-        correo: "",
-        sucursal: "",
-        bodega: "",
-        codigo_producto: "",
-        nombre_prod: "",
-        descripcion_prod: "",
-        unidad_medida: "",
-        cantidad_ingreso: 0,
-        marca: "",
-        origen_prod: "",
-        id_proveedor: "",
-        nombre_proveedor: "",
-        fecha_cad: null,
-        nota: "",
+export const IngresoForm: React.FC<Props> = ({ onSuccess, ingreso }) => { // Recibir 'ingreso'
+    
+    // Inicializar el estado (será sobreescrito por useEffect si 'ingreso' existe)
+    const [form, setForm] = useState<IngresoInsert>({ 
+        auth_uid: "", 
+        correo: "", 
+        ...initialFormState 
     });
 
     const [loading, setLoading] = useState(false);
@@ -48,7 +74,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
     const [modalMessage, setModalMessage] = useState("");
     const [openQr, setOpenQr] = useState(false);
 
-    // Obtener usuario autenticado
+    // Efecto 1: Cargar usuario autenticado
     useEffect(() => {
         const loadUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -63,20 +89,55 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         loadUser();
     }, []);
 
+    // Efecto 2: Cargar datos si estamos en modo edición (al cambiar 'ingreso')
+    useEffect(() => {
+        if (ingreso) {
+            // Mapear el Ingreso (que puede tener nulls) al formulario
+            setForm(prev => ({
+                ...prev,
+                auth_uid: ingreso.auth_uid ?? prev.auth_uid,
+                correo: ingreso.correo ?? prev.correo,
+                sucursal: ingreso.sucursal ?? "",
+                bodega: ingreso.bodega ?? "",
+                codigo_producto: ingreso.codigo_producto,
+                nombre_prod: ingreso.nombre_prod ?? "",
+                descripcion_prod: ingreso.descripcion_prod ?? null,
+                unidad_medida: ingreso.unidad_medida ?? null,
+                cantidad_ingreso: ingreso.cantidad_ingreso,
+                marca: ingreso.marca ?? null,
+                origen_prod: ingreso.origen_prod ?? null,
+                id_proveedor: ingreso.id_proveedor ?? null,
+                nombre_proveedor: ingreso.nombre_proveedor ?? null,
+                // CORRECCIÓN: Formatear la fecha para input type="date"
+                fecha_cad: formatDateToInput(ingreso.fecha_cad) || null,
+                nota: ingreso.nota ?? null,
+            }));
+        } else {
+            // Limpiar formulario para nueva inserción, manteniendo datos de usuario
+            setForm(prev => ({
+                ...prev,
+                ...initialFormState,
+            }));
+        }
+    }, [ingreso]);
+
     // Buscar producto por código
     const buscarProducto = async (codigo: string) => {
         if (!codigo) return;
+        // CORRECCIÓN 4: Asegurar que la búsqueda se haga en mayúsculas
+        const codigoUpper = codigo.toUpperCase();
+        
         const { data } = await supabase
             .from("a_productos")
             .select("*")
-            .eq("codigo_producto", codigo)
+            .eq("codigo_producto", codigoUpper)
             .maybeSingle();
 
         setForm(prev => ({
             ...prev,
             nombre_prod: data?.nombre_prod ?? "",
-            descripcion_prod: data?.descripcion_prod ?? "",
-            unidad_medida: data?.unidad_medida ?? "",
+            descripcion_prod: data?.descripcion_prod ?? null,
+            unidad_medida: data?.unidad_medida ?? null,
         }));
     };
 
@@ -84,34 +145,67 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
-        const { name, value, type } = e.target;
+        const { name, value } = e.target; // Eliminamos 'type' de la desestructuración
 
-        setForm(prev => ({
-            ...prev,
-            [name]: ["cantidad_ingreso", "fecha_cad"].includes(name)
-                ? type === "number"
-                    ? Number(value)
-                    : value
-                : value.toUpperCase(),
-        }));
+        setForm(prev => {
+            let newValue: string | number | null = value;
+
+            if (name === "cantidad_ingreso") {
+                newValue = value === "" ? 0 : Number(value);
+            } else if (name === "fecha_cad") {
+                // CORRECCIÓN 3: Si la fecha está vacía, se guarda como null
+                newValue = value === "" ? null : value;
+            } else {
+                // Convertir a mayúsculas y guardar null si está vacío
+                newValue = value.trim() === "" ? null : value.toUpperCase();
+            }
+
+            return {
+                ...prev,
+                [name]: newValue,
+            } as IngresoInsert; // Forzar el tipo aquí ayuda con la coherencia
+        });
 
         if (name === "codigo_producto") buscarProducto(value);
     };
 
+    // Manejador para Select y RadioGroup
+    const handleValueChange = (name: keyof IngresoInsert, val: string) => {
+        setForm(prev => ({
+            ...prev,
+            [name]: val.toUpperCase(),
+        }));
+    };
+
+
     // Construir payload limpio
-    const buildPayload = () => ({
-        ...form,
-        sucursal: form.sucursal.toUpperCase(),
-        bodega: form.bodega.toUpperCase(),
-        codigo_producto: form.codigo_producto.toUpperCase(),
-        nombre_prod: form.nombre_prod.toUpperCase(),
-        descripcion_prod: form.descripcion_prod?.toUpperCase() || null,
-        unidad_medida: form.unidad_medida?.toUpperCase() || null,
-        marca: form.marca?.toUpperCase() || null,
-        origen_prod: form.origen_prod?.toUpperCase() || null,
-        nombre_proveedor: form.nombre_proveedor?.toUpperCase() || null,
-        nota: form.nota?.toUpperCase() || null,
-    });
+    const buildPayload = (): IngresoInsert => {
+        
+        // Función auxiliar para asegurar que las cadenas vacías se conviertan a null
+        const cleanString = (val: string | null | undefined): string | null => 
+            (val && val.trim() !== "") ? val.trim().toUpperCase() : null;
+
+        // Utilizamos los campos obligatorios del form y limpiamos los opcionales
+        return {
+            auth_uid: form.auth_uid,
+            correo: form.correo,
+            sucursal: form.sucursal.toUpperCase(),
+            bodega: form.bodega.toUpperCase(),
+            codigo_producto: form.codigo_producto.toUpperCase(),
+            nombre_prod: form.nombre_prod.toUpperCase(),
+            cantidad_ingreso: Number(form.cantidad_ingreso),
+            
+            // Campos opcionales: Usamos la función auxiliar y el tipo corregido permite el resultado (string | null)
+            descripcion_prod: cleanString(form.descripcion_prod),
+            unidad_medida: cleanString(form.unidad_medida),
+            marca: cleanString(form.marca),
+            origen_prod: cleanString(form.origen_prod),
+            id_proveedor: cleanString(form.id_proveedor),
+            nombre_proveedor: cleanString(form.nombre_proveedor),
+            nota: cleanString(form.nota),
+            fecha_cad: form.fecha_cad === "" ? null : form.fecha_cad, // Ya manejado en handleChange
+        } as IngresoInsert;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -120,11 +214,37 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
 
         try {
             const payload = buildPayload();
-            const { error } = await supabase.from("a_ingresos").insert(payload);
-            if (error) throw error;
+            
+            // Validación de campos obligatorios
+            if (!payload.sucursal || !payload.bodega || !payload.codigo_producto || payload.cantidad_ingreso <= 0 || !payload.auth_uid || !payload.nombre_prod) {
+                throw new Error("Por favor, complete todos los campos obligatorios (Sucursal, Bodega, Código Producto, Nombre y Cantidad).");
+            }
 
-            setModalMessage("La entrada fue registrada correctamente.");
+            // LÓGICA DE INSERCIÓN/ACTUALIZACIÓN
+            if (ingreso) {
+                // Modo Edición: Usar update
+                const { error } = await supabase.from("a_ingresos")
+                    .update(payload)
+                    .eq('id_entr', ingreso.id_entr);
+                
+                if (error) throw error;
+                setModalMessage("La entrada fue actualizada correctamente.");
+
+            } else {
+                // Modo Inserción: Usar insert
+                const { error } = await supabase.from("a_ingresos").insert(payload);
+                if (error) throw error;
+
+                setModalMessage("La entrada fue registrada correctamente.");
+            }
+            
             setShowSuccess(true);
+            
+            // Limpiar solo si fue inserción
+            if (!ingreso) {
+                setForm(prev => ({ ...prev, ...initialFormState }));
+            }
+
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Error al guardar el ingreso");
         } finally {
@@ -136,6 +256,15 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         setShowSuccess(false);
         onSuccess();
     };
+    
+    // CORRECCIÓN 2: Lógica del QR separada
+    const handleQrResult = async (codigo: string) => {
+        setOpenQr(false); // Cerrar el modal
+        const codigoUpper = codigo.toUpperCase();
+        setForm(prev => ({ ...prev, codigo_producto: codigoUpper }));
+        await buscarProducto(codigoUpper);
+    };
+
 
     return (
         <>
@@ -149,6 +278,10 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                 onSubmit={handleSubmit}
                 className="space-y-6 p-4 md:p-6 border rounded-md bg-white shadow-sm"
             >
+                <h2 className="text-xl font-semibold mb-4">
+                    {ingreso ? `Editar Entrada ${ingreso.id_entr}` : "Registrar Nueva Entrada"}
+                </h2>
+
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -169,7 +302,8 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Label>Sucursal</Label>
                         <Select
                             value={form.sucursal}
-                            onValueChange={(val) => setForm({ ...form, sucursal: val.toUpperCase() })}
+                            onValueChange={(val) => handleValueChange("sucursal", val)}
+                            disabled={!!ingreso} // Deshabilitar edición en modo edición
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una sucursal" />
@@ -188,7 +322,8 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Label>Bodega</Label>
                         <Select
                             value={form.bodega}
-                            onValueChange={(val) => setForm({ ...form, bodega: val.toUpperCase() })}
+                            onValueChange={(val) => handleValueChange("bodega", val)}
+                            disabled={!!ingreso} // Deshabilitar edición en modo edición
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecciona una bodega" />
@@ -211,11 +346,13 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                                 placeholder="Escribe o escanea"
                                 required
                                 className="flex-1"
+                                disabled={!!ingreso} // Deshabilitar edición en modo edición
                             />
                             <Button
                                 type="button"
                                 className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
                                 onClick={() => setOpenQr(true)}
+                                disabled={!!ingreso || openQr} // Deshabilitar si ya está abierto
                             >
                                 📷
                             </Button>
@@ -223,10 +360,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         <QrScannerModal
                             open={openQr}
                             onClose={() => setOpenQr(false)}
-                            onResult={async (codigo) => {
-                                setForm(prev => ({ ...prev, codigo_producto: codigo }));
-                                await buscarProducto(codigo);
-                            }}
+                            onResult={handleQrResult} // Usamos la función corregida
                             title="Escanea un producto"
                         />
                     </div>
@@ -234,19 +368,36 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     {/* Nombre Producto */}
                     <div>
                         <Label>Nombre Producto</Label>
-                        <Input value={form.nombre_prod} disabled />
+                        <Input 
+                            name="nombre_prod" 
+                            value={form.nombre_prod} 
+                            onChange={handleChange}
+                            disabled={true} // Asumimos que no se debe cambiar el producto en un ingreso hecho
+                            required
+                        />
                     </div>
 
                     {/* Descripción */}
                     <div>
                         <Label>Descripción</Label>
-                        <Input value={form.descripcion_prod} disabled />
+                        <Input 
+                            name="descripcion_prod" 
+                            value={form.descripcion_prod ?? ""} // Usar ?? "" para el input
+                            onChange={handleChange} 
+                            disabled={true}
+                            
+                        />
                     </div>
 
                     {/* Unidad de Medida */}
                     <div>
                         <Label>Unidad de Medida</Label>
-                        <Input value={form.unidad_medida} disabled />
+                        <Input 
+                            name="unidad_medida" 
+                            value={form.unidad_medida ?? ""} 
+                            onChange={handleChange} 
+                            disabled={true}
+                        />
                     </div>
 
                     {/* Cantidad */}
@@ -276,8 +427,8 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     <div>
                         <Label>Origen</Label>
                         <RadioGroup
-                            value={form.origen_prod}
-                            onValueChange={(val) => setForm({ ...form, origen_prod: val.toUpperCase() })}
+                            value={form.origen_prod ?? ""}
+                            onValueChange={(val) => handleValueChange("origen_prod", val)}
                         >
                             <div className="flex items-center space-x-4">
                                 <div className="flex items-center space-x-2">
@@ -295,7 +446,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     {/* Proveedor */}
                     <div>
                         <Label>ID Proveedor</Label>
-                        <Input name="id_proveedor" value={form.id_proveedor ?? ""} onChange={handleChange} disabled />
+                        <Input name="id_proveedor" value={form.id_proveedor ?? ""} onChange={handleChange} />
                     </div>
                     <div>
                         <Label>Nombre Proveedor</Label>
@@ -308,9 +459,9 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Input
                             type="date"
                             name="fecha_cad"
-                            value={form.fecha_cad ?? ""}
+                            // CORRECCIÓN: Usamos ?? "" para que el input type="date" funcione si es null
+                            value={form.fecha_cad ?? ""} 
                             onChange={handleChange}
-                            required
                         />
                     </div>
 
@@ -330,7 +481,10 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
 
                 <div className="flex justify-end">
                     <Button type="submit" disabled={loading}>
-                        {loading ? "Guardando..." : "Registrar Entrada"}
+                        {loading 
+                            ? (ingreso ? "Actualizando..." : "Guardando...") 
+                            : (ingreso ? "Actualizar Entrada" : "Registrar Entrada")
+                        }
                     </Button>
                 </div>
             </form>
