@@ -1,7 +1,8 @@
 //src/app/dashboard/components/views/adminviews/DashboardCards.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+// CORRECCIÓN: Importamos useCallback
+import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import {
     Card,
@@ -42,7 +43,7 @@ const cardStyles: CardStyle[] = [
         bgColor: "bg-gradient-to-br from-purple-50/70 to-white dark:from-gray-800/70 dark:to-gray-900",
         trendValue: "45%",
         trendType: 'down',
-        link: "/dashboard/adminviews/productos"  // Ruta de productos
+        link: "/dashboard/inventario/productos"  // Ruta de productos
     },
     {
         key: "ingresos",
@@ -106,12 +107,14 @@ const DashboardCards = () => {
             const year = d.getFullYear();
             return `${day}/${month}/${year}`;
         } catch {
-            return "N/A"; // No necesitas usar la variable 'error'
+            return "N/A";
         }
     };
 
-    const fetchStats = async () => {
-        // Optimización de llamadas con Promise.all
+    //Envolver fetchStats con useCallback para hacerlo estable
+    const fetchStats = useCallback(async () => {
+
+        // Optimización de llamadas con Promise.all (Counts)
         const [{ count: productos }, { count: ingresos }, { count: salidas }, { count: usuarios }] = await Promise.all([
             supabase.from("a_productos").select("*", { count: "exact", head: true }),
             supabase.from("a_ingresos").select("*", { count: "exact", head: true }),
@@ -119,6 +122,7 @@ const DashboardCards = () => {
             supabase.from("a_usuarios").select("*", { count: "exact", head: true }),
         ]);
 
+        // Optimización de llamadas con Promise.all (Last Dates)
         const [productosData, ingresosData, salidasData, usuariosData] = await Promise.all([
             supabase.from("a_productos").select("fecha_reg").order("fecha_reg", { ascending: false }).limit(1),
             supabase.from("a_ingresos").select("fecha_ing").order("fecha_ing", { ascending: false }).limit(1),
@@ -139,11 +143,26 @@ const DashboardCards = () => {
             salidas: salidas ?? 0,
             usuarios: usuarios ?? 0,
         });
-    };
+    }, [setStats, setDates]); // setStats y setDates son estables, pero se listan por formalidad
 
+    // CORRECCIÓN: Incluimos fetchStats en el array de dependencias para cumplir con ESLint
     useEffect(() => {
-        fetchStats();
-    }, []);
+        let ignore = false;
+
+        const loadData = async () => {
+            // Solo llamamos a fetchStats si el componente no ha sido desmontado
+            if (!ignore) {
+                await fetchStats();
+            }
+        };
+
+        loadData();
+
+        // Función de limpieza
+        return () => {
+            ignore = true;
+        };
+    }, [fetchStats]); // ESLint está satisfecho
 
     // Componente para el círculo de color (simula el degradado circular)
     const IconCircle = ({ icon, color }: { icon: React.ReactNode, color: string }) => (
@@ -160,14 +179,14 @@ const DashboardCards = () => {
 
         return (
             <div className={`flex items-center text-xs font-semibold px-2 py-1 rounded-full ${trendClass} dark:bg-opacity-20`}>
-                <Icon className="w-6 h-6 mr-1" />
+                <Icon className="w-6 h-6 mr-3" />
                 {trendValue}
             </div>
         );
     };
 
     return (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {cardStyles.map((style) => (
                 <Link key={style.key} href={style.link} passHref>
                     <Card
@@ -182,7 +201,7 @@ const DashboardCards = () => {
                                 <TrendPill trendType={style.trendType} trendValue={style.trendValue} />
                             </CardHeader>
 
-                            <CardContent className="flex flex-col justify-center items-center p-4 pt-2">
+                            <CardContent className="flex flex-col justify-center items-center">
                                 <div className="text-5xl font-bold tracking-tight text-gray-800 dark:text-white">
                                     {/* Valor Principal (ej. 20K, 145K) */}
                                     {stats[style.key].toLocaleString()}
@@ -196,7 +215,7 @@ const DashboardCards = () => {
                         {/* Simulación del Sparkline y Fecha */}
                         <CardFooter className="flex flex-col items-start p-4 pt-0">
                             {/* Simulación Gráfico de Puntos (Sparkline) */}
-                            <div className="flex space-x-1 mb-2">
+                            <div className="flex space-x-2 mb-2">
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <div
                                         key={i}

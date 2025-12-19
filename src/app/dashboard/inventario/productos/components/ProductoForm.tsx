@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 
 interface Props {
-    producto?: Producto;      // 👈 crear / editar
+    producto?: Producto;
     onSuccess: () => void;
 }
 
@@ -41,9 +41,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     const [showSuccess, setShowSuccess] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
 
-    /* ===============================
-       Obtener usuario logueado
-    =============================== */
+    /* Obtener usuario logueado */
     useEffect(() => {
         const getUserData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -58,9 +56,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         getUserData();
     }, []);
 
-    /* ===============================
-       Cargar datos si es edición
-    =============================== */
+    /* Cargar datos si es edición */
     useEffect(() => {
         if (producto) {
             setForm({
@@ -77,9 +73,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         }
     }, [producto]);
 
-    /* ===============================
-       Payload limpio (MAYÚSCULAS)
-    =============================== */
+    /* Payload limpio (MAYÚSCULAS) */
     const buildPayload = () => ({
         auth_uid: form.auth_uid,
         correo: form.correo,
@@ -92,9 +86,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         activo: form.activo,
     });
 
-    /* ===============================
-       Submit (INSERT / UPDATE)
-    =============================== */
+    /* Submit (INSERT / UPDATE) */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -132,9 +124,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         }
     };
 
-    /* ===============================
-       Handlers
-    =============================== */
+    /* Handlers */
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
@@ -151,9 +141,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         onSuccess();
     };
 
-    /* ===============================
-       Render
-    =============================== */
+    /* Render */
     return (
         <>
             <SuccessModal
@@ -211,13 +199,13 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                         />
                     </div>
 
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-1">
                         <Label>Descripción</Label>
                         <Textarea
                             name="descripcion_prod"
                             value={form.descripcion_prod}
                             onChange={handleChange}
-                            rows={3}
+                            rows={2}
                             className="uppercase"
                         />
                     </div>

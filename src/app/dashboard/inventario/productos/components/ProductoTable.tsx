@@ -261,8 +261,8 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                 </TableHead>
                             ))}
                             <TableHead className="w-auto text-center">Estado</TableHead>
-                            <TableHead className="w-[120px] text-center">Acciones</TableHead>
-                            <TableHead className="w-[120px] text-center">Edición</TableHead>
+                            <TableHead className="w-28 text-center">Acciones</TableHead>
+                            <TableHead className="w-28 text-center">Edición</TableHead>
                         </TableRow>
                     </TableHeader>
 
