@@ -1,7 +1,6 @@
 -- 🌓 BASE DE DATOS: LUNA
 -- Estructura simplificada: solo tabla a_usuarios
 
--- =====================================================
 -- 👤 TABLA: a_usuarios
 CREATE TABLE public.a_usuarios (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -70,7 +69,6 @@ CREATE TABLE public.a_productos (
     auth_uid UUID REFERENCES public.a_usuarios(auth_uid) ON DELETE SET NULL,
     correo VARCHAR(150),
     sucursal TEXT,
-    bodega TEXT,
     codigo_producto TEXT UNIQUE NOT NULL,
     nombre_prod TEXT NOT NULL,
     descripcion_prod TEXT,
