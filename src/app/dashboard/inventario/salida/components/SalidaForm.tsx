@@ -370,7 +370,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         />
                     </div>
 
-                    <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-1">
                         <Label>Nota</Label>
                         <Textarea
                             name="nota"
