@@ -5,7 +5,6 @@ import React from "react"; // Ya no se necesita useState
 import { useIngresos } from "./hooks/useIngresos";
 import { IngresoForm } from "./components/IngresoForm";
 import { IngresoTable } from "./components/IngresoTable";
-// Ya no se necesita el tipo Ingreso aquí
 
 const EntradaPage = () => {
     const { ingresos, loading, error, fetchIngresos } = useIngresos();
@@ -20,10 +19,8 @@ const EntradaPage = () => {
             </h1>
 
             <IngresoForm
-                // CORRECCIÓN 1: Eliminamos la prop 'ingreso' que causa el error
                 onSuccess={() => {
                     fetchIngresos();
-                    // CORRECCIÓN 2: Eliminamos la limpieza de selectedIngreso
                 }}
             />
 
@@ -31,7 +28,6 @@ const EntradaPage = () => {
             <div className="hidden md:block">
                 <IngresoTable 
                     ingresos={ingresos}
-                    // CORRECCIÓN 3: Eliminamos la prop onEditSelect que causa el error
                 />
             </div>
         </div>

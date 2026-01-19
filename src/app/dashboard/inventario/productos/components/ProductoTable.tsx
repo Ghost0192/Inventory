@@ -50,6 +50,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
         categoria_prod: "",
         unidad_medida: "",
         stock_min: 0,
+        tipo_inventario: "",
         activo: true,
     });
     const [message, setMessage] = useState<string | null>(null); // Estado para mensajes de éxito/error
@@ -72,7 +73,8 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                 (p.nombre_prod ?? "").toLowerCase().includes(q) ||
                 (p.descripcion_prod ?? "").toLowerCase().includes(q) ||
                 (p.codigo_producto ?? "").toLowerCase().includes(q) ||
-                (p.categoria_prod ?? "").toLowerCase().includes(q)
+                (p.categoria_prod ?? "").toLowerCase().includes(q) ||
+                (p.tipo_inventario ?? "").toLowerCase().includes(q)
         );
     }, [search, productos]);
 
@@ -131,10 +133,11 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
     const columns: { key: keyof Producto, label: string, className?: string }[] = [
         { key: "fecha_reg", label: "Fecha Reg.", className: "w-[120px] hidden lg:table-cell" },
         { key: "codigo_producto", label: "Código", className: "w-[120px]" },
-        { key: "nombre_prod", label: "Producto" },
-        { key: "descripcion_prod", label: "Descripción" },
+        { key: "nombre_prod", label: "Producto"},
+        { key: "descripcion_prod", label: "Descripción", className: "w-[100px]" },
         { key: "categoria_prod", label: "Categoría", className: "hidden sm:table-cell" },
         { key: "stock_min", label: "Stock Mín.", className: "w-[100px] text-center" },
+        { key: "tipo_inventario", label: "Tipo Inventario", className: "w-[100px]" }
     ];
 
     const handleEdit = (producto: Producto) => {
@@ -145,6 +148,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
             categoria_prod: producto.categoria_prod || "",
             unidad_medida: producto.unidad_medida || "",
             stock_min: producto.stock_min || 0,
+            tipo_inventario: producto.tipo_inventario || "",
             activo: producto.activo ?? true,
         });
         setOpenModal(true);
@@ -260,9 +264,15 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                     </div>
                                 </TableHead>
                             ))}
+<<<<<<< HEAD
+                            
+                            <TableHead className="w-[100px] text-center">Acciones</TableHead>
+                            <TableHead className="w-[100px] text-center">Edición</TableHead>
+=======
                             <TableHead className="w-auto text-center">Estado</TableHead>
-                            <TableHead className="w-[120px] text-center">Acciones</TableHead>
-                            <TableHead className="w-[120px] text-center">Edición</TableHead>
+                            <TableHead className="w-28 text-center">Acciones</TableHead>
+                            <TableHead className="w-28 text-center">Edición</TableHead>
+>>>>>>> b118ebc35400c44e1f01447ed823d22400e36c8d
                         </TableRow>
                     </TableHeader>
 
@@ -273,11 +283,11 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                     <TableCell className="text-sm text-gray-500 hidden lg:table-cell">{formatDate(p.fecha_reg)}</TableCell>
                                     <TableCell className="font-mono text-sm text-gray-700">{p.codigo_producto}</TableCell>
                                     <TableCell className="font-medium text-gray-900">{p.nombre_prod}</TableCell>
-                                    <TableCell className="text-gray-600 hidden sm:table-cell">{p.descripcion_prod}</TableCell>
+                                    <TableCell className="text-gray-600 text[1px] hidden sm:table-cell w-1">{p.descripcion_prod}</TableCell>
                                     <TableCell className="text-gray-600 hidden sm:table-cell">{p.categoria_prod}</TableCell>
                                     <TableCell className="font-bold text-center text-indigo-600">{p.stock_min}</TableCell>
-
-                                    <TableCell className="text-center">
+                                    <TableCell className="text-gray-600">{p.tipo_inventario}</TableCell>
+                                    {/* <TableCell className="text-center">
                                         <span
                                             className={clsx("px-2 py-1 rounded-full text-xs font-semibold uppercase", {
                                                 "bg-green-100 text-green-700": p.activo,
@@ -286,7 +296,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                         >
                                             {p.activo ? "Activo" : "Inactivo"}
                                         </span>
-                                    </TableCell>
+                                    </TableCell>*/}
 
                                     <TableCell className="text-center space-x-2">
                                         <QRCreate

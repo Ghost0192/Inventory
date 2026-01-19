@@ -15,6 +15,7 @@ export interface Producto {
     categoria_prod?: string | null;
     unidad_medida?: string | null;
     stock_min?: number | null;
+    tipo_inventario?: string | null;
     activo?: boolean | null;
 }
 
@@ -28,6 +29,7 @@ export interface ProductoInsert {
     categoria_prod?: string;
     unidad_medida?: string;
     stock_min?: number;
+    tipo_inventario?: string;
     activo?: boolean;
 }
 
@@ -44,5 +46,6 @@ export interface ProductoEditar {
     categoria_prod?: string | null;
     unidad_medida?: string | null;
     stock_min?: number | null;
+    tipo_inventario?: string | null;
     activo?: boolean | null;
 }

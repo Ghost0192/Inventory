@@ -312,12 +312,22 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                                 <SelectValue placeholder="Selecciona un destino" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Oficinas">Oficinas</SelectItem>
-                                <SelectItem value="Medios">Medios</SelectItem>
-                                <SelectItem value="Trasfer 1">Transfer 1</SelectItem>
-                                <SelectItem value="Trasfer 2">Transfer 2</SelectItem>
-                                <SelectItem value="Trasfer 3">Transfer 3</SelectItem>
-                                <SelectItem value="Trasfer 4">Transfer 4</SelectItem>
+                                <SelectItem value="MEDIO">MEDIOS</SelectItem>
+                                <SelectItem value="CHEQUEO">CHEQUEO</SelectItem>
+                                <SelectItem value="TRANSFER">TRANSFER</SelectItem>
+                                <SelectItem value="TRANSFER 1">TRANSFER 1</SelectItem>
+                                <SelectItem value="TRANSFER 2">TRANSFER 2</SelectItem>
+                                <SelectItem value="TRANSFER 3">TRANSFER 3</SelectItem>
+                                <SelectItem value="TRANSFER 4">TRANSFER 4</SelectItem>
+                                <SelectItem value="DESPACHO">DESPACHO</SelectItem>
+                                <SelectItem value="LAVADERO">LAVADERO</SelectItem>
+                                <SelectItem value="ADMINISTRACION">ADMINISTRACION</SelectItem>
+                                <SelectItem value="OFICINA">OFICINAS</SelectItem>
+                                <SelectItem value="CIDI">CIDI</SelectItem>
+                                <SelectItem value="MANTENCION">MANTENCION</SelectItem>
+                                <SelectItem value="FRUTALES">FRUTALES</SelectItem>
+                                <SelectItem value="ASEO">ASEO</SelectItem>
+                                <SelectItem value="OSORNO">OSORNO</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

@@ -42,8 +42,7 @@ const formatDateToInput = (dateStr: string | null): string => {
 };
 
 interface Props {
-    ingresos: Ingreso[]; // Solo necesitamos ingresos
-    // CORRECCIÓN: Eliminamos onEditSelect
+    ingresos: Ingreso[];
 }
 
 export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
@@ -52,13 +51,11 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
     const [page, setPage] = useState(1);
     const [sortColumn, setSortColumn] = useState<keyof Ingreso | null>(null);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-    const [loadingSave, setLoadingSave] = useState(false); // Estado para el botón de guardar
+    const [loadingSave, setLoadingSave] = useState(false);
 
-    // CORRECCIÓN: Reincorporar el estado del Modal de edición
     const [openModal, setOpenModal] = useState(false);
     const [selectedIngreso, setSelectedIngreso] = useState<Ingreso | null>(null);
 
-    // Estado del formulario de edición local
     const [editForm, setEditForm] = useState({
         nombre_prod: "",
         descripcion_prod: "",
@@ -111,12 +108,12 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
         { key: "bodega", label: "Bodega" },
         { key: "codigo_producto", label: "Código" },
         { key: "nombre_prod", label: "Nombre" },
-        { key: "descripcion_prod", label: "Descripción de producto" }, // Encabezado corregido
+        { key: "descripcion_prod", label: "Descripción Producto" }, // Encabezado corregido
         { key: "unidad_medida", label: "Unidad" },
         { key: "cantidad_ingreso", label: "Cantidad" },
         { key: "marca", label: "Marca" },
         { key: "origen_prod", label: "Origen" },
-        { key: "nombre_proveedor", label: "Nombre Proveedor" },
+        { key: "nombre_proveedor", label: "Proveedor" },
         { key: "fecha_cad", label: "Fecha Caducidad" },
         { key: "editar", label: "Editar" },
     ];
@@ -146,7 +143,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
             marca: currentIngreso.marca ?? "",
             origen_prod: currentIngreso.origen_prod ?? "",
             nombre_proveedor: currentIngreso.nombre_proveedor ?? "",
-            // CORRECCIÓN: Formatear la fecha para el input type="date"
+            //Formatear la fecha para el input type="date"
             fecha_cad: formatDateToInput(currentIngreso.fecha_cad),
         });
         setOpenModal(true);
@@ -174,9 +171,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                 .eq('id_entr', selectedIngreso.id_entr);
 
             if (error) throw error;
-            
-            // Éxito: Cerrar modal y notificar al padre para recargar la tabla (si fuera necesario)
-            // Ya que no tenemos un onSuccess, solo actualizamos la UI local si es necesario o esperamos el refresh global.
+            // Cerrar modal al guardar exitosamente
             setOpenModal(false);
             
         } catch (error) {
@@ -230,7 +225,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
 
             {/* Tabla con scroll horizontal */}
             <div className="overflow-x-auto rounded-md border">
-                <Table className="min-w-[300px]"> 
+                <Table className="min-w-4xl"> 
                     <TableHeader>
                         <TableRow>
                             {tableColumns.map((col) => (

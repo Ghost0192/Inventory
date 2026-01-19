@@ -1,10 +1,8 @@
--- =====================================================
 -- 🌓 BASE DE DATOS: LUNA
 -- Estructura simplificada: solo tabla a_usuarios
 
 -- =====================================================
 -- 👤 TABLA: a_usuarios
--- =====================================================
 CREATE TABLE public.a_usuarios (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     auth_uid UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -34,10 +32,8 @@ COMMENT ON COLUMN public.a_usuarios.rol IS
 COMMENT ON COLUMN public.a_usuarios.sucursal IS
 'Nombre o identificador de la sucursal asignada al usuario.';
 
--- =====================================================
 -- ⚙️ FUNCIÓN TRIGGER: crear_usuario_automatico
 -- Crea un registro en a_usuarios cuando se registra un usuario nuevo en auth.users
--- =====================================================
 CREATE OR REPLACE FUNCTION public.crear_usuario_automatico()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -54,9 +50,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 COMMENT ON FUNCTION public.crear_usuario_automatico() IS
 'Crea automáticamente un registro en a_usuarios al registrarse un nuevo usuario en auth.users.';
 
--- =====================================================
 -- 🚀 TRIGGER: on_auth_user_created
--- =====================================================
 CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW
@@ -65,16 +59,11 @@ EXECUTE FUNCTION public.crear_usuario_automatico();
 COMMENT ON TRIGGER on_auth_user_created ON auth.users IS
 'Trigger que sincroniza nuevos usuarios de auth.users con a_usuarios.';
 
--- =====================================================
 -- ✅ OPCIONAL: Insertar ejemplo
--- =====================================================
 INSERT INTO public.a_usuarios (auth_uid, correo, nombre_completo, rol, sucursal)
 VALUES ('', 'admin@luna.com', 'Administrador LUNA', 'admin', 'Sucursal Central');
 
--- =====================================================
 -- 📦 TABLA: a_productos
--- =====================================================
-
 CREATE TABLE public.a_productos (
     id_prod UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     fecha_reg TIMESTAMPTZ DEFAULT NOW(),
@@ -85,15 +74,35 @@ CREATE TABLE public.a_productos (
     codigo_producto TEXT UNIQUE NOT NULL,
     nombre_prod TEXT NOT NULL,
     descripcion_prod TEXT,
-    marca_prod TEXT,
-    origen_prod TEXT,
     categoria_prod TEXT,
-    id_proveedor UUID,
-    nombre_proveedor TEXT,
     unidad_medida TEXT,
     stock_min INTEGER DEFAULT 0,
     activo BOOLEAN DEFAULT TRUE
 );
+
+create table public.a_productos (
+  id_prod uuid not null default gen_random_uuid (),
+  fecha_reg timestamp with time zone null default now(),
+  auth_uid uuid null,
+  correo character varying(150) null,
+  sucursal text null,
+  codigo_producto text not null,
+  nombre_prod text not null,
+  descripcion_prod text null,
+  categoria_prod text null,
+  unidad_medida text null,
+  stock_min integer null default 0,
+  activo boolean null default true,
+  constraint a_productos_pkey primary key (id_prod),
+  constraint a_productos_codigo_producto_key unique (codigo_producto),
+  constraint a_productos_auth_uid_fkey foreign KEY (auth_uid) references a_usuarios (auth_uid) on delete set null
+) TABLESPACE pg_default;
+
+create trigger trigger_codigo_producto BEFORE INSERT on a_productos for EACH row when (
+  new.codigo_producto is null
+  or new.codigo_producto = ''::text
+)
+execute FUNCTION asignar_codigo_producto ();
 
 COMMENT ON TABLE public.a_productos IS
 'Catálogo de productos con información básica y stock mínimo configurado.';
@@ -101,32 +110,34 @@ COMMENT ON TABLE public.a_productos IS
 COMMENT ON COLUMN public.a_productos.stock_min IS
 'Cantidad mínima recomendada en inventario antes de generar alerta.';
 
--- =====================================================
 -- 📥 TABLA: a_ingresos
--- =====================================================
-
 CREATE TABLE public.a_ingresos (
     id_entr UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     fecha_ing TIMESTAMPTZ DEFAULT NOW(),
     auth_uid UUID REFERENCES public.a_usuarios(auth_uid) ON DELETE SET NULL,
     correo VARCHAR(150),
     sucursal TEXT,
+    bodega TEXT,
     codigo_producto TEXT NOT NULL REFERENCES public.a_productos(codigo_producto) ON DELETE CASCADE,
     nombre_prod TEXT,
     descripcion_prod TEXT,
+    cuenta_contable NUMERIC NULL,
     unidad_medida TEXT,
     cantidad_ingreso NUMERIC(10,2) NOT NULL CHECK (cantidad_ingreso > 0),
     fecha_cad DATE,
     nota TEXT
+    marca TEXT NULL,
+    origen_prod TEXT NULL,
+    id_proveedor TEXT NULL,
+    nombre_proveedor TEXT NULL,
+    fecha_cad DATE NULL,
+    nota TEXT NULL,
 );
 
 COMMENT ON TABLE public.a_ingresos IS
 'Registro de entradas de productos al inventario (compras, devoluciones, etc.).';
 
--- =====================================================
 -- 📤 TABLA: a_salidas
--- =====================================================
-
 CREATE TABLE public.a_salidas (
     id_salida UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     fecha_salida TIMESTAMPTZ DEFAULT NOW(),
@@ -146,10 +157,7 @@ CREATE TABLE public.a_salidas (
 COMMENT ON TABLE public.a_salidas IS
 'Registro de salidas de productos del inventario (ventas, consumos, bajas, etc.).';
 
--- =====================================================
 -- 🔍 VISTA OPCIONAL: a_vista_stock_minimo
--- =====================================================
-
 CREATE OR REPLACE VIEW public.a_vista_stock_minimo AS
 SELECT 
     p.id_prod,

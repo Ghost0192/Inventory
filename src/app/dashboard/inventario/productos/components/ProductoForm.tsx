@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 
 interface Props {
-    producto?: Producto;      // 👈 crear / editar
+    producto?: Producto;
     onSuccess: () => void;
 }
 
@@ -211,13 +211,13 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                         />
                     </div>
 
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-1">
                         <Label>Descripción</Label>
                         <Textarea
                             name="descripcion_prod"
                             value={form.descripcion_prod}
                             onChange={handleChange}
-                            rows={3}
+                            rows={2}
                             className="uppercase"
                         />
                     </div>

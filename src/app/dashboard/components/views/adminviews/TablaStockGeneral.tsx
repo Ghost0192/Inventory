@@ -153,7 +153,7 @@ export default function TablaStockGeneral() {
             {/* HEADER Y BOTÓN */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
                 <h2 className="text-2xl font-extrabold text-gray-800 border-b-2">
-                    Inventario General
+                    Inventario de Productos ingresos vs salidas
                 </h2>
 
                 <Button 
@@ -181,7 +181,7 @@ export default function TablaStockGeneral() {
                 />
                 
                 <Select value={statusFilter} onValueChange={handleStatusChange}>
-                    <SelectTrigger className="w-[200px] bg-gray-50 border-gray-200 focus:ring-indigo-500">
+                    <SelectTrigger className="w-48 bg-gray-50 border-gray-200 focus:ring-indigo-500">
                         <SelectValue placeholder="Filtrar por estado..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -199,7 +199,7 @@ export default function TablaStockGeneral() {
                 <Table>
                     <TableHeader className="bg-gray-100 sticky top-0"> 
                         <TableRow className="text-gray-600 uppercase text-xs tracking-wider">
-                            <TableHead className="w-[120px] font-semibold">Código</TableHead>
+                            <TableHead className="w-28 font-semibold">Código</TableHead>
                             <TableHead className="font-semibold">Producto</TableHead>
                             <TableHead className="text-center font-semibold">Stock Mín.</TableHead>
                             <TableHead className="text-center font-semibold">Ingresos</TableHead>
