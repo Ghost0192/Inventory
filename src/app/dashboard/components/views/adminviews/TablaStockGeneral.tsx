@@ -60,7 +60,8 @@ export default function TablaStockGeneral() {
                     .select("*")
                     // Ordenamos por prioridad (1=URGENTE, 3=SUFICIENTE)
                     .order('orden_prioridad', { ascending: true }) 
-                    .order('nombre_prod', { ascending: true }); 
+                    .order('nombre_prod', { ascending: true })
+                    .order('unidad_medida', { ascending: true }); 
 
                 if (error) {
                     console.error("Error al cargar datos:", error);
@@ -121,6 +122,7 @@ export default function TablaStockGeneral() {
         const dataToExport = items.map(item => ({
             "Código Producto": item.codigo_producto,
             "Producto": item.nombre_prod,
+            "Unidad": item.unidad_medida,
             "Stock Mínimo": item.stock_min,
             "Total Ingresos": item.total_ingresos,
             "Total Salidas": item.total_salidas,
@@ -201,6 +203,7 @@ export default function TablaStockGeneral() {
                         <TableRow className="text-gray-600 uppercase text-xs tracking-wider">
                             <TableHead className="w-28 font-semibold">Código</TableHead>
                             <TableHead className="font-semibold">Producto</TableHead>
+                            <TableHead className="font-semibold">Unidad</TableHead>
                             <TableHead className="text-center font-semibold">Stock Mín.</TableHead>
                             <TableHead className="text-center font-semibold">Ingresos</TableHead>
                             <TableHead className="text-center font-semibold">Salidas</TableHead>
@@ -231,6 +234,7 @@ export default function TablaStockGeneral() {
                                 <TableRow key={item.codigo_producto} className={getRowColor(item.estado_stock)}>
                                     <TableCell className="font-mono text-sm text-gray-700">{item.codigo_producto}</TableCell>
                                     <TableCell className="font-medium text-gray-900">{item.nombre_prod}</TableCell>
+                                    <TableCell className="font-medium text-gray-900">{item.unidad_medida}</TableCell>
                                     <TableCell className="text-center text-blue-600">{item.stock_min}</TableCell>
                                     <TableCell className="text-center text-green-700 font-medium">{item.total_ingresos}</TableCell>
                                     <TableCell className="text-center text-red-700 font-medium">{item.total_salidas}</TableCell>

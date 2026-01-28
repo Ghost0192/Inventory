@@ -1,3 +1,4 @@
+// src/app/dashboard/inventario/productos/components/ProductoTable.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -40,7 +41,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
-    const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
+    {/*const [productToDelete, setProductToDelete] = useState<Producto | null>(null);*/ }
 
     const [openModal, setOpenModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
@@ -55,10 +56,12 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
     });
     const [message, setMessage] = useState<string | null>(null); // Estado para mensajes de éxito/error
 
+    {/*}
     const handleDeleteRequest = (producto: Producto) => {
         setProductToDelete(producto);
         setOpenDeleteModal(true);
     };
+    */}
 
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-ES', {
         year: 'numeric',
@@ -132,12 +135,12 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
 
     const columns: { key: keyof Producto, label: string, className?: string }[] = [
         { key: "fecha_reg", label: "Fecha Reg.", className: "w-[120px] hidden lg:table-cell" },
-        { key: "codigo_producto", label: "Código", className: "w-[120px]" },
-        { key: "nombre_prod", label: "Producto"},
-        { key: "descripcion_prod", label: "Descripción", className: "w-[100px]" },
+        { key: "codigo_producto", label: "Código", className: "w-40 truncate max-w-36" },
+        { key: "nombre_prod", label: "Producto" },
+        { key: "descripcion_prod", label: "Descripción", className: "w-40 truncate max-w-36" },
         { key: "categoria_prod", label: "Categoría", className: "hidden sm:table-cell" },
-        { key: "stock_min", label: "Stock Mín.", className: "w-[100px] text-center" },
-        { key: "tipo_inventario", label: "Tipo Inventario", className: "w-[100px]" }
+        { key: "stock_min", label: "Stock Mín.", className: "w-[100] text-center" },
+        { key: "tipo_inventario", label: "Tipo Inventario", className: "max-w-[100]" }
     ];
 
     const handleEdit = (producto: Producto) => {
@@ -152,8 +155,10 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
             activo: producto.activo ?? true,
         });
         setOpenModal(true);
+        if (onEdit) onEdit(producto);
     };
 
+    {/*
     const handleDeleteConfirm = async () => {
         if (!productToDelete) return;
 
@@ -175,6 +180,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
         setOpenDeleteModal(false);
         setProductToDelete(null);
     };
+    */}
 
     const handleSave = async () => {
         if (selectedProduct) {
@@ -248,7 +254,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <div className="overflow-x-auto rounded-lg border border-gray-200 w-[1450]">
                 <Table>
                     <TableHeader className="bg-gray-100 sticky top-0">
                         <TableRow className="text-gray-600 uppercase text-xs tracking-wider">
@@ -265,8 +271,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                 </TableHead>
                             ))}
                             <TableHead className="w-auto text-center">Estado</TableHead>
-                            <TableHead className="w-[120px] text-center">Acciones</TableHead>
-                            <TableHead className="w-[120px] text-center">Edición</TableHead>
+                            <TableHead className="w-[12] text-center">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -277,10 +282,10 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                     <TableCell className="text-sm text-gray-500 hidden lg:table-cell">{formatDate(p.fecha_reg)}</TableCell>
                                     <TableCell className="font-mono text-sm text-gray-700">{p.codigo_producto}</TableCell>
                                     <TableCell className="font-medium text-gray-900">{p.nombre_prod}</TableCell>
-                                    <TableCell className="text-gray-600 text[1px] hidden sm:table-cell w-1">{p.descripcion_prod}</TableCell>
+                                    <TableCell className="text-gray-600 w-[1]">{p.descripcion_prod}</TableCell>
                                     <TableCell className="text-gray-600 hidden sm:table-cell">{p.categoria_prod}</TableCell>
                                     <TableCell className="font-bold text-center text-indigo-600">{p.stock_min}</TableCell>
-                                    <TableCell className="text-gray-600">{p.tipo_inventario}</TableCell>
+                                    <TableCell className="text-gray-600 w-[10]">{p.tipo_inventario}</TableCell>
                                     {/* <TableCell className="text-center">
                                         <span
                                             className={clsx("px-2 py-1 rounded-full text-xs font-semibold uppercase", {
@@ -308,13 +313,17 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                             <Edit className="h-4 w-4 mr-1" /> Editar
                                         </Button>
 
+                                        {/*
                                         <Button
                                             variant="destructive"
                                             size="sm"
-                                            onClick={() => handleDeleteRequest(p)}
+                                            onClick={() => handleDeleteRequest(p)
+                                                
+                                            }
                                         >
                                             Eliminar
                                         </Button>
+                                        */}
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -419,19 +428,23 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                             </DialogTitle>
                         </DialogHeader>
 
+                        {/*
                         <p className="text-gray-700 text-sm">
                             ¿Seguro que deseas eliminar el producto{" "}
                             <span className="font-bold">{productToDelete?.nombre_prod}</span>?
                             Esta acción no se puede deshacer.
                         </p>
+                        */}
 
                         <DialogFooter className="mt-6">
                             <Button variant="outline" onClick={() => setOpenDeleteModal(false)}>
                                 Cancelar
                             </Button>
+                            {/*
                             <Button variant="destructive" onClick={handleDeleteConfirm}>
                                 Eliminar
                             </Button>
+                            */}
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

@@ -3,6 +3,7 @@
 export interface StockGeneral {
     codigo_producto: string;
     nombre_prod: string;
+    unidad_medida: string;
     descripcion: string;
     stock_min: number;
     total_ingresos: number;

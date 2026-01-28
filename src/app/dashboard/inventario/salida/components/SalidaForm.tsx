@@ -251,10 +251,10 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                                 <SelectValue placeholder="Selecciona sucursal" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Hijuelas">Hijuelas</SelectItem>
-                                <SelectItem value="Osorno">Osorno</SelectItem>
-                                <SelectItem value="Ica">Ica</SelectItem>
-                                <SelectItem value="Queretaro">Querétaro</SelectItem>
+                                <SelectItem value="HIJUELAS">HIJUELAS</SelectItem>
+                                <SelectItem value="OSORNO">OSORNO</SelectItem>
+                                <SelectItem value="ICA">ICA</SelectItem>
+                                <SelectItem value="QUERETARO">QUERETARO</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -312,22 +312,22 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                                 <SelectValue placeholder="Selecciona un destino" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="MEDIO">MEDIOS</SelectItem>
+                                <SelectItem value="ADMINISTRACION">ADMINISTRACION</SelectItem>
+                                <SelectItem value="ASEO">ASEO</SelectItem>
                                 <SelectItem value="CHEQUEO">CHEQUEO</SelectItem>
+                                <SelectItem value="CIDI">CIDI</SelectItem>
+                                <SelectItem value="DESPACHO">DESPACHO</SelectItem>
+                                <SelectItem value="FRUTALES">FRUTALES (AFM)</SelectItem>
+                                <SelectItem value="HARDENING ESTERIL">HARDENING ESTERIL</SelectItem>
+                                <SelectItem value="LAVADERO">LAVADERO</SelectItem>
+                                <SelectItem value="MANTENCION">MANTENCION</SelectItem>
+                                <SelectItem value="MEDIO">MEDIOS</SelectItem>
+                                <SelectItem value="OSORNO">OSORNO</SelectItem>
                                 <SelectItem value="TRANSFER">TRANSFER</SelectItem>
                                 <SelectItem value="TRANSFER 1">TRANSFER 1</SelectItem>
                                 <SelectItem value="TRANSFER 2">TRANSFER 2</SelectItem>
                                 <SelectItem value="TRANSFER 3">TRANSFER 3</SelectItem>
                                 <SelectItem value="TRANSFER 4">TRANSFER 4</SelectItem>
-                                <SelectItem value="DESPACHO">DESPACHO</SelectItem>
-                                <SelectItem value="LAVADERO">LAVADERO</SelectItem>
-                                <SelectItem value="ADMINISTRACION">ADMINISTRACION</SelectItem>
-                                <SelectItem value="OFICINA">OFICINAS</SelectItem>
-                                <SelectItem value="CIDI">CIDI</SelectItem>
-                                <SelectItem value="MANTENCION">MANTENCION</SelectItem>
-                                <SelectItem value="FRUTALES">FRUTALES</SelectItem>
-                                <SelectItem value="ASEO">ASEO</SelectItem>
-                                <SelectItem value="OSORNO">OSORNO</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
