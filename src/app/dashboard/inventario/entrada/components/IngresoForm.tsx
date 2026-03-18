@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { cleanString } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { SuccessModal } from "@/components/ui/common/SuccessModal";
 import { QrScannerModal } from "@/components/ui/common/QrScannerModal";
 // Importamos solo IngresoInsert
-import { IngresoInsert } from "../types"; 
+import { IngresoInsert } from "../types";
 
 // Estado inicial limpio del formulario (sin campos de usuario)
 const initialFormState: Omit<IngresoInsert, 'auth_uid' | 'correo'> = {
@@ -26,8 +26,8 @@ const initialFormState: Omit<IngresoInsert, 'auth_uid' | 'correo'> = {
     bodega: "",
     codigo_producto: "",
     nombre_prod: "",
-    descripcion_prod: null, 
-    unidad_medida: null, 
+    descripcion_prod: null,
+    unidad_medida: null,
     cantidad_ingreso: 0,
     marca: null,
     origen_prod: null,
@@ -48,13 +48,13 @@ interface Props {
     // CORRECCIÓN: Eliminamos la prop 'ingreso' (ya que el formulario es solo para inserción)
 }
 
-export const IngresoForm: React.FC<Props> = ({ onSuccess }) => { 
-    
+export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
+
     // Inicializar el estado
-    const [form, setForm] = useState<IngresoInsert>({ 
-        auth_uid: "", 
-        correo: "", 
-        ...initialFormState 
+    const [form, setForm] = useState<IngresoInsert>({
+        auth_uid: "",
+        correo: "",
+        ...initialFormState
     });
 
     const [loading, setLoading] = useState(false);
@@ -81,14 +81,14 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
     // CORRECCIÓN: Eliminamos el useEffect para cargar 'ingreso' (ya que no existe)
     /* useEffect(() => {
         // ... Lógica de carga de edición eliminada
-    }, [ingreso]); */ 
+    }, [ingreso]); */
 
 
     // Buscar producto por código
     const buscarProducto = async (codigo: string) => {
         if (!codigo) return;
         const codigoUpper = codigo.toUpperCase();
-        
+
         const { data } = await supabase
             .from("a_productos")
             .select("*")
@@ -107,7 +107,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
-        const { name, value } = e.target; 
+        const { name, value } = e.target;
 
         setForm(prev => {
             let newValue: string | number | null = value;
@@ -123,7 +123,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
             return {
                 ...prev,
                 [name]: newValue,
-            } as IngresoInsert; 
+            } as IngresoInsert;
         });
 
         if (name === "codigo_producto") buscarProducto(value);
@@ -137,13 +137,8 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         }));
     };
 
-
     // Construir payload limpio
     const buildPayload = (): IngresoInsert => {
-        
-        const cleanString = (val: string | null | undefined): string | null => 
-            (val && val.trim() !== "") ? val.trim().toUpperCase() : null;
-
         return {
             auth_uid: form.auth_uid,
             correo: form.correo,
@@ -152,7 +147,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
             codigo_producto: form.codigo_producto.toUpperCase(),
             nombre_prod: form.nombre_prod.toUpperCase(),
             cantidad_ingreso: Number(form.cantidad_ingreso),
-            
+
             descripcion_prod: cleanString(form.descripcion_prod),
             unidad_medida: cleanString(form.unidad_medida),
             marca: cleanString(form.marca),
@@ -160,7 +155,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
             id_proveedor: cleanString(form.id_proveedor),
             nombre_proveedor: cleanString(form.nombre_proveedor),
             nota: cleanString(form.nota),
-            fecha_cad: form.fecha_cad === "" ? null : form.fecha_cad, 
+            fecha_cad: form.fecha_cad === "" ? null : form.fecha_cad,
         } as IngresoInsert;
     };
 
@@ -171,7 +166,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
 
         try {
             const payload = buildPayload();
-            
+
             // Validación de campos obligatorios
             if (!payload.sucursal || !payload.bodega || !payload.codigo_producto || payload.cantidad_ingreso <= 0 || !payload.auth_uid || !payload.nombre_prod) {
                 throw new Error("Por favor, complete todos los campos obligatorios (Sucursal, Bodega, Código Producto, Nombre y Cantidad).");
@@ -183,10 +178,10 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
 
             setModalMessage("La entrada fue registrada correctamente.");
             setShowSuccess(true);
-            
+
             // Limpiar formulario
             setForm(prev => ({ ...prev, ...initialFormState }));
-            
+
 
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Error al guardar el ingreso");
@@ -199,7 +194,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         setShowSuccess(false);
         onSuccess(); // Dispara la recarga de datos en el padre
     };
-    
+
     // Lógica del QR separada
     const handleQrResult = async (codigo: string) => {
         setOpenQr(false); // Cerrar el modal
@@ -308,31 +303,31 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                     {/* Nombre Producto */}
                     <div>
                         <Label>Nombre Producto</Label>
-                        <Input 
-                            name="nombre_prod" 
-                            value={form.nombre_prod} 
-                            onChange={handleChange}
+                        <Input
+                            name="nombre_prod"
+                            value={form.nombre_prod}
                             required
+                            disabled
                         />
                     </div>
 
                     {/* Descripción */}
                     <div>
                         <Label>Descripción</Label>
-                        <Input 
-                            name="descripcion_prod" 
-                            value={form.descripcion_prod ?? ""} 
-                            onChange={handleChange} 
+                        <Input
+                            name="descripcion_prod"
+                            value={form.descripcion_prod ?? ""}
+                            disabled
                         />
                     </div>
 
                     {/* Unidad de Medida */}
                     <div>
                         <Label>Unidad de Medida</Label>
-                        <Input 
-                            name="unidad_medida" 
-                            value={form.unidad_medida ?? ""} 
-                            onChange={handleChange} 
+                        <Input
+                            name="unidad_medida"
+                            value={form.unidad_medida ?? ""}
+                            disabled
                         />
                     </div>
 
@@ -395,20 +390,18 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Input
                             type="date"
                             name="fecha_cad"
-                            value={form.fecha_cad ?? ""} 
+                            value={form.fecha_cad ?? ""}
                             onChange={handleChange}
                         />
                     </div>
 
                     {/* Nota */}
-                    <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+                    <div>
                         <Label>Nota</Label>
-                        <Textarea
+                        <Input
                             name="nota"
-                            rows={3}
                             value={form.nota ?? ""}
                             onChange={handleChange}
-                            placeholder="Observaciones opcionales"
                         />
                     </div>
 

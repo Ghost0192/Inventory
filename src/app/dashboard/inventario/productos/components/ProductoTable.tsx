@@ -276,7 +276,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                         </TableRow>
                     </TableHeader>
 
-                    <TableBody>
+                    <TableBody className="text-xs">
                         {paginated.length > 0 ? (
                             paginated.map((p) => (
                                 <TableRow key={p.id_prod}>

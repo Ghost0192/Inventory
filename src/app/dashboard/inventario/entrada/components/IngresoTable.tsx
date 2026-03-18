@@ -2,7 +2,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Ingreso, IngresoEdit } from "../types"; // Importamos IngresoEdit para el estado
+import { Ingreso, IngresoEdit } from "../types";
+import { formatDateToInput, formatDateForDisplay } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -21,25 +22,9 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Edit2 } from "lucide-react";
-// CORRECCIÓN: Reincorporar el Modal
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label"; // Añadir Label para el formulario del Modal
-import { supabase } from "@/lib/supabaseClient"; // Necesario para la función de guardado
-
-// Función auxiliar para formatear una fecha ISO a YYYY-MM-DD (para el input del Modal)
-const formatDateToInput = (dateStr: string | null): string => {
-    if (!dateStr) return "";
-    try {
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return "";
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    } catch (e) {
-        return "";
-    }
-};
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabaseClient";
 
 interface Props {
     ingresos: Ingreso[];
@@ -103,7 +88,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
 
     // Columnas de la tabla con el encabezado de "Descripción de producto"
     const tableColumns = [
-        { key: "fecha_ing", label: "Fecha registro" },
+        { key: "fecha_ing", label: "Fecha registro"},
         { key: "sucursal", label: "Sucursal" },
         { key: "bodega", label: "Bodega" },
         { key: "codigo_producto", label: "Código" },
@@ -183,12 +168,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
     };
 
     // Formatear fecha (DD/MM/YYYY) para la visualización en la tabla
-    const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return "-";
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return "-";
-        return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
-    };
+    const formatDate = (dateStr: string | null) => formatDateForDisplay(dateStr);
 
     return (
         <div className="space-y-4 border p-4 rounded">
@@ -248,7 +228,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                         </TableRow>
                     </TableHeader>
 
-                    <TableBody>
+                    <TableBody className="text-xs">
                         {paginated.length > 0 ? (
                             paginated.map((i) => (
                                 <TableRow key={i.id_entr}>
@@ -256,8 +236,8 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                                     <TableCell className="w-24 truncate">{i.sucursal}</TableCell>
                                     <TableCell className="w-24 truncate">{i.bodega}</TableCell>
                                     <TableCell className="w-24 truncate">{i.codigo_producto}</TableCell>
-                                    <TableCell className="w-32 truncate">{i.nombre_prod}</TableCell>
-                                    <TableCell className="w-40 truncate max-w-36">{i.descripcion_prod}</TableCell>
+                                    <TableCell className="w-40 truncate max-w-48">{i.nombre_prod}</TableCell>
+                                    <TableCell className="w-40 truncate max-w-48">{i.descripcion_prod}</TableCell>
                                     <TableCell className="w-24 truncate">{i.unidad_medida}</TableCell>
                                     <TableCell className="w-24 truncate">{i.cantidad_ingreso}</TableCell>
                                     <TableCell className="w-32 truncate">{i.marca}</TableCell>

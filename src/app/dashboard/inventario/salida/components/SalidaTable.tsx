@@ -123,7 +123,7 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
                         </TableRow>
                     </TableHeader>
 
-                    <TableBody>
+                    <TableBody className="text-xs">
                         {paginated.length > 0 ? (
                             paginated.map((s) => (
                                 <TableRow key={s.id_salida}>
