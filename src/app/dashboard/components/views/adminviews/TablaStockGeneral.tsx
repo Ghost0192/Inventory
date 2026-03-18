@@ -4,31 +4,31 @@
 import { useEffect, useState, useMemo } from "react";
 // Supabase debería importarse desde lib/supabaseClient
 // FIX: La ruta de importación se mantiene, pero se requiere un archivo mock en /lib para resolver el error de compilación.
-import { supabase } from "@/lib/supabaseClient"; 
+import { supabase } from "@/lib/supabaseClient";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
 } from "@/components/ui/select"; // Componente para el filtro
 
-import { StockGeneral } from "../adminviews/types/types"; 
+import { StockGeneral } from "../adminviews/types/types";
 // FIX: La librería 'xlsx' es una dependencia externa que no está disponible en este entorno.
 // Se comenta la importación para resolver el error de compilación.
-import * as XLSX from "xlsx"; 
+import * as XLSX from "xlsx";
 import clsx from "clsx";
 
 export default function TablaStockGeneral() {
     const [items, setItems] = useState<StockGeneral[]>([]);
     const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState("");
-    
+
     // NUEVO ESTADO: Filtro para la columna 'Estado'
-    const [statusFilter, setStatusFilter] = useState<string>("all"); 
+    const [statusFilter, setStatusFilter] = useState<string>("all");
 
     // PAGINACIÓN
     const [page, setPage] = useState(1);
@@ -52,16 +52,16 @@ export default function TablaStockGeneral() {
     useEffect(() => {
         const loadStock = async () => {
             setLoading(true);
-            
+
             try {
                 // Usando el cliente Supabase
                 const { data, error } = await supabase
                     .from("v_stock_disponible")
                     .select("*")
                     // Ordenamos por prioridad (1=URGENTE, 3=SUFICIENTE)
-                    .order('orden_prioridad', { ascending: true }) 
+                    .order('orden_prioridad', { ascending: true })
                     .order('nombre_prod', { ascending: true })
-                    .order('unidad_medida', { ascending: true }); 
+                    .order('unidad_medida', { ascending: true });
 
                 if (error) {
                     console.error("Error al cargar datos:", error);
@@ -87,7 +87,7 @@ export default function TablaStockGeneral() {
             const q = query.toLowerCase();
             const codigo = item.codigo_producto ? item.codigo_producto.toLowerCase() : '';
             const nombre = item.nombre_prod ? item.nombre_prod.toLowerCase() : '';
-            
+
             return (
                 codigo.includes(q) ||
                 nombre.includes(q)
@@ -99,14 +99,14 @@ export default function TablaStockGeneral() {
             // Filtramos por el string que incluye la palabra clave
             filteredItems = filteredItems.filter(item => item.estado_stock.includes(statusFilter));
         }
-        
+
         // El reinicio de página se maneja en los handlers onChange.
         return filteredItems;
     }, [items, query, statusFilter]);
-    
+
     // Función de cambio de filtro para resetear la paginación
     const handleStatusChange = (value: string) => {
-        setPage(1); 
+        setPage(1);
         setStatusFilter(value);
     };
 
@@ -117,7 +117,7 @@ export default function TablaStockGeneral() {
     // EXPORTAR A EXCEL 
     const exportToExcel = () => {
         console.warn("La función de exportar a Excel requiere la librería 'xlsx'. Por favor, instálala en tu proyecto para que funcione. Se simulará la exportación en consola.");
-        
+
         // Lógica real de exportación (se comenta el uso directo de XLSX para evitar error de compilación)
         const dataToExport = items.map(item => ({
             "Código Producto": item.codigo_producto,
@@ -129,7 +129,7 @@ export default function TablaStockGeneral() {
             "Stock Disponible": item.stock_disponible,
             "Estado de Stock": item.estado_stock.replace(/❌|⚠️|✔️/g, '').trim(), // Limpiamos el emoji
         }));
-        
+
         if (typeof XLSX !== 'undefined' && XLSX.utils && XLSX.writeFile) {
             const ws = XLSX.utils.json_to_sheet(dataToExport);
             const wb = XLSX.utils.book_new();
@@ -145,7 +145,7 @@ export default function TablaStockGeneral() {
     const statusOptions = [
         { value: "all", label: "Todos los estados" },
         { value: "URGENTE", label: "❌ URGENTE: SIN STOCK" },
-        { value: "BAJO", label: "⚠️ STOCK BAJO: Reponer" },
+        { value: "BAJO", label: "⚠️ STOCK BAJO: REPONER" },
         { value: "SUFICIENTE", label: "✔️ STOCK SUFICIENTE" },
     ];
 
@@ -158,8 +158,8 @@ export default function TablaStockGeneral() {
                     Inventario de Productos ingresos vs salidas
                 </h2>
 
-                <Button 
-                    onClick={exportToExcel} 
+                <Button
+                    onClick={exportToExcel}
                     className="bg-indigo-600 hover:bg-indigo-700 transition-all duration-300 shadow-lg shadow-indigo-200/50 hover:shadow-indigo-300/60 transform hover:-translate-y-0.5"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -176,12 +176,12 @@ export default function TablaStockGeneral() {
                     value={query}
                     // Al cambiar el query, reiniciamos la paginación y actualizamos el query
                     onChange={(e) => {
-                        setPage(1); 
+                        setPage(1);
                         setQuery(e.target.value);
                     }}
                     className="max-w-md bg-gray-50 border-gray-200 focus:border-indigo-500 transition-colors"
                 />
-                
+
                 <Select value={statusFilter} onValueChange={handleStatusChange}>
                     <SelectTrigger className="w-48 bg-gray-50 border-gray-200 focus:ring-indigo-500">
                         <SelectValue placeholder="Filtrar por estado..." />
@@ -199,7 +199,7 @@ export default function TablaStockGeneral() {
             {/* TABLA */}
             <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <Table>
-                    <TableHeader className="bg-gray-100 sticky top-0"> 
+                    <TableHeader className="bg-gray-100 sticky top-0">
                         <TableRow className="text-gray-600 uppercase text-xs tracking-wider">
                             <TableHead className="w-28 font-semibold">Código</TableHead>
                             <TableHead className="font-semibold">Producto</TableHead>
