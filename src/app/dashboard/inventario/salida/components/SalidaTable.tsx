@@ -50,6 +50,12 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
         });
     }, [filtered, sortColumn, sortOrder]);
 
+    const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginated = sorted.slice(start, end);
@@ -92,7 +98,7 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
             </div>
 
             <div className="rounded-md border">
-                <Table>
+                <Table className="min-w-4xl">
                     <TableHeader>
                         <TableRow>
                             {[
@@ -121,16 +127,16 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
                         {paginated.length > 0 ? (
                             paginated.map((s) => (
                                 <TableRow key={s.id_salida}>
-                                    <TableCell>{s.fecha_salida}</TableCell>
-                                    <TableCell>{s.sucursal}</TableCell>
-                                    <TableCell>{s.codigo_producto}</TableCell>
-                                    <TableCell>{s.nombre_prod}</TableCell>
-                                    <TableCell>{s.descripcion_prod}</TableCell>
-                                    <TableCell>{s.area_destino}</TableCell>
-                                    <TableCell>{s.numero_documento}</TableCell>
-                                    <TableCell>{s.unidad_medida}</TableCell>
-                                    <TableCell>{s.cantidad_salida}</TableCell>
-                                    <TableCell>{s.nota}</TableCell>
+                                    <TableCell className="w-24 truncate">{formatDate(s.fecha_salida)}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.sucursal}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.codigo_producto}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.nombre_prod}</TableCell>
+                                    <TableCell className="w-24 truncate max-w-64">{s.descripcion_prod}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.area_destino}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.numero_documento}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.unidad_medida}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.cantidad_salida}</TableCell>
+                                    <TableCell className="w-24 truncate">{s.nota}</TableCell>
                                 </TableRow>
                             ))
                         ) : (

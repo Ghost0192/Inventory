@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
+import { version } from 'os'
 
 interface SidebarProps {
   role: string
@@ -176,6 +177,7 @@ export default function Sidebar({ role, nombreCompleto, correo }: SidebarProps) 
           </div>
           <p className="text-sm text-gray-500 truncate">{correo}</p>
           <p className="text-sm text-gray-500 truncate">{role}</p>
+          <p className="text-xs text-gray-400 italic">Versión 1.0.0</p>
         </div>
 
         {/* Menú principal */}

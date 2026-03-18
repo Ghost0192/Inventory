@@ -134,13 +134,14 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
     };
 
     const columns: { key: keyof Producto, label: string, className?: string }[] = [
-        { key: "fecha_reg", label: "Fecha Reg.", className: "w-[120px] hidden lg:table-cell" },
-        { key: "codigo_producto", label: "Código", className: "w-40 truncate max-w-36" },
+        { key: "fecha_reg", label: "Fecha Reg." },
+        { key: "codigo_producto", label: "Código" },
         { key: "nombre_prod", label: "Producto" },
-        { key: "descripcion_prod", label: "Descripción", className: "w-40 truncate max-w-36" },
-        { key: "categoria_prod", label: "Categoría", className: "hidden sm:table-cell" },
-        { key: "stock_min", label: "Stock Mín.", className: "w-[100] text-center" },
-        { key: "tipo_inventario", label: "Tipo Inventario", className: "max-w-[100]" }
+        { key: "descripcion_prod", label: "Descripción" },
+        { key: "categoria_prod", label: "Categoría" },
+        { key: "stock_min", label: "Stock Mín." },
+        { key: "unidad_medida", label: "Unidad Medida" },
+        { key: "tipo_inventario", label: "Tipo Inventario" }
     ];
 
     const handleEdit = (producto: Producto) => {
@@ -254,8 +255,8 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto rounded-lg border border-gray-200 w-[1450]">
-                <Table>
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <Table className="min-w-4xl">
                     <TableHeader className="bg-gray-100 sticky top-0">
                         <TableRow className="text-gray-600 uppercase text-xs tracking-wider">
                             {columns.map((col) => (
@@ -271,22 +272,23 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                 </TableHead>
                             ))}
                             <TableHead className="w-auto text-center">Estado</TableHead>
-                            <TableHead className="w-[12] text-center">Acciones</TableHead>
+                            <TableHead className="w-auto text-center">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
 
                     <TableBody>
                         {paginated.length > 0 ? (
                             paginated.map((p) => (
-                                <TableRow key={p.id_prod} className="hover:bg-indigo-50/20 transition-colors scroll-auto">
-                                    <TableCell className="text-sm text-gray-500 hidden lg:table-cell">{formatDate(p.fecha_reg)}</TableCell>
-                                    <TableCell className="font-mono text-sm text-gray-700">{p.codigo_producto}</TableCell>
-                                    <TableCell className="font-medium text-gray-900">{p.nombre_prod}</TableCell>
-                                    <TableCell className="text-gray-600 w-[1]">{p.descripcion_prod}</TableCell>
-                                    <TableCell className="text-gray-600 hidden sm:table-cell">{p.categoria_prod}</TableCell>
-                                    <TableCell className="font-bold text-center text-indigo-600">{p.stock_min}</TableCell>
-                                    <TableCell className="text-gray-600 w-[10]">{p.tipo_inventario}</TableCell>
-                                    {/* <TableCell className="text-center">
+                                <TableRow key={p.id_prod}>
+                                    <TableCell className="w-24 truncate">{formatDate(p.fecha_reg)}</TableCell>
+                                    <TableCell className="w-24 truncate">{p.codigo_producto}</TableCell>
+                                    <TableCell className="w-24 truncate">{p.nombre_prod}</TableCell>
+                                    <TableCell className="w-40 truncate max-w-48">{p.descripcion_prod}</TableCell>
+                                    <TableCell className="w-24 truncate">{p.categoria_prod}</TableCell>
+                                    <TableCell className="w-24 truncate">{p.stock_min}</TableCell>
+                                    <TableCell className="w-24 truncate">{p.unidad_medida}</TableCell>
+                                    <TableCell className="w-24 truncate">{p.tipo_inventario}</TableCell>
+                                    <TableCell className="text-center">
                                         <span
                                             className={clsx("px-2 py-1 rounded-full text-xs font-semibold uppercase", {
                                                 "bg-green-100 text-green-700": p.activo,
@@ -295,7 +297,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                         >
                                             {p.activo ? "Activo" : "Inactivo"}
                                         </span>
-                                    </TableCell>*/}
+                                    </TableCell>
 
                                     <TableCell className="text-center space-x-2">
                                         <QRCreate

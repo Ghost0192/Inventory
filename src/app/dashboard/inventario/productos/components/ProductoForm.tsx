@@ -5,7 +5,7 @@ import { Producto, ProductoInsert } from "../types";
 import { supabase } from "@/lib/supabaseClient";
 
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+{/*import { Textarea } from "@/components/ui/textarea";*/}
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -199,16 +199,28 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                         />
                     </div>
 
+                    <div>
+                        <Label>Descripción</Label>
+                        <Input
+                            name="descripcion_prod"
+                            value={form.descripcion_prod}
+                            onChange={handleChange}
+                            required
+                            className="uppercase"
+                        />
+                    </div>
+
+                    {/* 
                     <div className="md:col-span-1">
                         <Label>Descripción</Label>
                         <Textarea
                             name="descripcion_prod"
                             value={form.descripcion_prod}
                             onChange={handleChange}
-                            rows={2}
+                            rows={3}
                             className="uppercase"
                         />
-                    </div>
+                    </div>*/}
 
                     <div>
                         <Label>Categoría</Label>
@@ -264,7 +276,7 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
 
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex">
                     <Button type="submit" disabled={loading}>
                         {loading
                             ? "Guardando..."
