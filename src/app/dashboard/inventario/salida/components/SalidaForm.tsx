@@ -1,10 +1,9 @@
 // src/app/dashboard/inventario/salida/components/SalidaForm.tsx
 "use client";
 
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { SUCURSALES, DESTINO_AREAS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -142,6 +141,16 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
     };
 
     /* -----------------------------------------------------------
+    HANDLE VALUE CHANGE → para Select
+    ----------------------------------------------------------- */
+    const handleValueChange = (name: keyof SalidaInsert, val: string) => {
+        setForm(prev => ({
+            ...prev,
+            [name]: val.toUpperCase(),
+        }));
+    };
+
+    /* -----------------------------------------------------------
     PAYLOAD FINAL → todo en mayúsculas ANTES DE GUARDAR
     ----------------------------------------------------------- */
     const buildInsertPayload = (): SalidaInsert => ({
@@ -251,10 +260,11 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                                 <SelectValue placeholder="Selecciona sucursal" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="HIJUELAS">HIJUELAS</SelectItem>
-                                <SelectItem value="OSORNO">OSORNO</SelectItem>
-                                <SelectItem value="ICA">ICA</SelectItem>
-                                <SelectItem value="QUERETARO">QUERETARO</SelectItem>
+                                {SUCURSALES.map((sucursal) => (
+                                    <SelectItem key={sucursal} value={sucursal}>
+                                        {sucursal}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -312,22 +322,11 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                                 <SelectValue placeholder="Selecciona un destino" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="ADMINISTRACION">ADMINISTRACION</SelectItem>
-                                <SelectItem value="ASEO">ASEO</SelectItem>
-                                <SelectItem value="CHEQUEO">CHEQUEO</SelectItem>
-                                <SelectItem value="CIDI">CIDI</SelectItem>
-                                <SelectItem value="DESPACHO">DESPACHO</SelectItem>
-                                <SelectItem value="FRUTALES">FRUTALES (AFM)</SelectItem>
-                                <SelectItem value="HARDENING ESTERIL">HARDENING ESTERIL</SelectItem>
-                                <SelectItem value="LAVADERO">LAVADERO</SelectItem>
-                                <SelectItem value="MANTENCION">MANTENCION</SelectItem>
-                                <SelectItem value="MEDIO">MEDIOS</SelectItem>
-                                <SelectItem value="OSORNO">OSORNO</SelectItem>
-                                <SelectItem value="TRANSFER">TRANSFER</SelectItem>
-                                <SelectItem value="TRANSFER 1">TRANSFER 1</SelectItem>
-                                <SelectItem value="TRANSFER 2">TRANSFER 2</SelectItem>
-                                <SelectItem value="TRANSFER 3">TRANSFER 3</SelectItem>
-                                <SelectItem value="TRANSFER 4">TRANSFER 4</SelectItem>
+                                {DESTINO_AREAS.map((area) => (
+                                    <SelectItem key={area} value={area}>
+                                        {area === "FRUTALES" ? "FRUTALES (AFM)" : area === "MEDIO" ? "MEDIOS" : area}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

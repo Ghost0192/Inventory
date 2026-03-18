@@ -3,6 +3,7 @@
 
 import React, { useState, useMemo } from "react";
 import { Producto } from "../types";
+import { formatDateForDisplay } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -20,7 +21,7 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Search, ChevronLeft, ChevronRight, Edit } from "lucide-react"; // Iconos modernos
+import { ArrowUpDown, Search, ChevronLeft, ChevronRight, Edit } from "lucide-react";
 
 import { QRCreate } from "@/components/ui/common/QRCreate";
 import clsx from "clsx";
@@ -63,11 +64,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
     };
     */}
 
-    const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
+    const formatDate = (dateString: string) => formatDateForDisplay(dateString);
 
     const filtered = useMemo(() => {
         const q = search.toLowerCase();
@@ -282,7 +279,7 @@ export const ProductoTable: React.FC<Props> = ({ productos, onEdit }) => {
                                 <TableRow key={p.id_prod}>
                                     <TableCell className="w-24 truncate">{formatDate(p.fecha_reg)}</TableCell>
                                     <TableCell className="w-24 truncate">{p.codigo_producto}</TableCell>
-                                    <TableCell className="w-24 truncate">{p.nombre_prod}</TableCell>
+                                    <TableCell className="w-24 truncate max-w-48">{p.nombre_prod}</TableCell>
                                     <TableCell className="w-40 truncate max-w-48">{p.descripcion_prod}</TableCell>
                                     <TableCell className="w-24 truncate">{p.categoria_prod}</TableCell>
                                     <TableCell className="w-24 truncate">{p.stock_min}</TableCell>

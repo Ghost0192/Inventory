@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Ingreso, IngresoEdit } from "../types";
+import { Ingreso } from "../types";
 import { formatDateToInput, formatDateForDisplay } from "@/lib/utils";
 import {
     Table,
@@ -37,6 +37,7 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
     const [sortColumn, setSortColumn] = useState<keyof Ingreso | null>(null);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
     const [loadingSave, setLoadingSave] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     const [openModal, setOpenModal] = useState(false);
     const [selectedIngreso, setSelectedIngreso] = useState<Ingreso | null>(null);
@@ -117,28 +118,44 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
     // CORRECCIÓN: Abrir Modal de edición
     const handleEdit = (ingreso: Ingreso) => {
         setSelectedIngreso(ingreso);
-        
-        // Inicializar editForm con los datos del ingreso (usando IngresoEdit para la coerción)
-        const currentIngreso = ingreso as IngresoEdit;
+        setSaveError(null); // Clear error from previous attempt
 
+        // Inicializar editForm con los datos del ingreso
         setEditForm({
-            nombre_prod: currentIngreso.nombre_prod ?? "",
-            descripcion_prod: currentIngreso.descripcion_prod ?? "",
-            cantidad_ingreso: currentIngreso.cantidad_ingreso ?? 0,
-            marca: currentIngreso.marca ?? "",
-            origen_prod: currentIngreso.origen_prod ?? "",
-            nombre_proveedor: currentIngreso.nombre_proveedor ?? "",
-            //Formatear la fecha para el input type="date"
-            fecha_cad: formatDateToInput(currentIngreso.fecha_cad),
+            nombre_prod: ingreso.nombre_prod ?? "",
+            descripcion_prod: ingreso.descripcion_prod ?? "",
+            cantidad_ingreso: ingreso.cantidad_ingreso ?? 0,
+            marca: ingreso.marca ?? "",
+            origen_prod: ingreso.origen_prod ?? "",
+            nombre_proveedor: ingreso.nombre_proveedor ?? "",
+            fecha_cad: formatDateToInput(ingreso.fecha_cad),
         });
         setOpenModal(true);
     };
 
     // CORRECCIÓN: Lógica para Guardar cambios (Update a Supabase)
     const handleSave = async () => {
-        if (!selectedIngreso) return;
+        if (!selectedIngreso) {
+            setSaveError("No hay un ingreso seleccionado.");
+            return;
+        }
+
+        // Validación: nombre_prod es requerido
+        if (!editForm.nombre_prod?.trim()) {
+            setSaveError("El nombre del producto es requerido.");
+            return;
+        }
+
+        // Validación: cantidad_ingreso debe ser válida y > 0
+        const quantity = Number(editForm.cantidad_ingreso);
+        if (isNaN(quantity) || quantity < 0.01) {
+            setSaveError("La cantidad debe ser un número mayor a 0.");
+            return;
+        }
+
         setLoadingSave(true);
-        
+        setSaveError(null);
+
         // Crear payload solo con los campos editables
         const payload = {
             nombre_prod: editForm.nombre_prod?.toUpperCase() || null,
@@ -158,10 +175,12 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
             if (error) throw error;
             // Cerrar modal al guardar exitosamente
             setOpenModal(false);
-            
+            setSaveError(null);
+
         } catch (error) {
-            console.error("Error al actualizar el ingreso:", error);
-            alert("Error al guardar los cambios.");
+            const message = error instanceof Error ? error.message : "Error al guardar los cambios.";
+            console.error("Error al actualizar el ingreso:", message);
+            setSaveError(message);
         } finally {
             setLoadingSave(false);
         }
@@ -312,8 +331,10 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                             <Input
                                 type="number"
                                 placeholder="Cantidad"
+                                min="0.01"
+                                step="0.01"
                                 value={editForm.cantidad_ingreso}
-                                onChange={(e) => setEditForm({ ...editForm, cantidad_ingreso: Number(e.target.value) })}
+                                onChange={(e) => setEditForm({ ...editForm, cantidad_ingreso: Number(e.target.value) || 0 })}
                             />
                         </div>
 
@@ -358,6 +379,12 @@ export const IngresoTable: React.FC<Props> = ({ ingresos }) => {
                             />
                         </div>
                     </div>
+
+                    {saveError && (
+                        <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md border border-red-200">
+                            {saveError}
+                        </div>
+                    )}
 
                     <DialogFooter className="mt-4 flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setOpenModal(false)} disabled={loadingSave}>

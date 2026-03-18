@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Salida } from "../types"; // Define el tipo Salida similar a Ingreso
+import { Salida } from "../types";
+import { formatDateForDisplay } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -50,11 +51,7 @@ export const SalidaTable: React.FC<Props> = ({ salidas }) => {
         });
     }, [filtered, sortColumn, sortOrder]);
 
-    const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
+    const formatDate = (dateString: string) => formatDateForDisplay(dateString);
 
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;

@@ -1,9 +1,10 @@
 // src/app/dashboard/inventario/entrada/components/IngresoForm.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { cleanString } from "@/lib/utils";
+import { cleanString, debounce } from "@/lib/utils";
+import { SUCURSALES, BODEGAS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,18 +38,13 @@ const initialFormState: Omit<IngresoInsert, 'auth_uid' | 'correo'> = {
     nota: null,
 };
 
-// Función auxiliar para formatear la fecha a YYYY-MM-DD (se mueve al Modal de Edición si se necesita allí)
-/* const formatDateToInput = (dateStr: string | null | undefined): string => {
-    // ...
-}; */
-
-
 interface Props {
     onSuccess: () => void;
-    // CORRECCIÓN: Eliminamos la prop 'ingreso' (ya que el formulario es solo para inserción)
 }
 
 export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
+    // Debounced product search reference
+    const debouncedSearch = useRef<ReturnType<typeof debounce> | undefined>(undefined);
 
     // Inicializar el estado
     const [form, setForm] = useState<IngresoInsert>({
@@ -78,33 +74,45 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         loadUser();
     }, []);
 
-    // CORRECCIÓN: Eliminamos el useEffect para cargar 'ingreso' (ya que no existe)
-    /* useEffect(() => {
-        // ... Lógica de carga de edición eliminada
-    }, [ingreso]); */
-
-
-    // Buscar producto por código
-    const buscarProducto = async (codigo: string) => {
-        if (!codigo) return;
+    // Buscar producto por código - Debounced to prevent excessive API calls
+    const buscarProducto = useCallback(async (codigo: string) => {
+        if (!codigo?.trim()) return;
         const codigoUpper = codigo.toUpperCase();
 
-        const { data } = await supabase
-            .from("a_productos")
-            .select("*")
-            .eq("codigo_producto", codigoUpper)
-            .maybeSingle();
+        try {
+            const { data, error } = await supabase
+                .from("a_productos")
+                .select("*")
+                .eq("codigo_producto", codigoUpper)
+                .maybeSingle();
 
-        setForm(prev => ({
-            ...prev,
-            nombre_prod: data?.nombre_prod ?? "",
-            descripcion_prod: data?.descripcion_prod ?? null,
-            unidad_medida: data?.unidad_medida ?? null,
-        }));
-    };
+            if (error) {
+                console.error("Error searching product:", error);
+                return;
+            }
+
+            setForm(prev => ({
+                ...prev,
+                nombre_prod: data?.nombre_prod ?? "",
+                descripcion_prod: data?.descripcion_prod ?? null,
+                unidad_medida: data?.unidad_medida ?? null,
+            }));
+        } catch (err) {
+            console.error("Unexpected error in buscarProducto:", err);
+        }
+    }, []);
+
+    // Initialize debounced search once with proper cleanup
+    useEffect(() => {
+        debouncedSearch.current = debounce(buscarProducto, 400);
+
+        return () => {
+            debouncedSearch.current = undefined;
+        };
+    }, [buscarProducto]);
 
     // Manejar cambios en inputs y textarea
-    const handleChange = (
+    const handleChange = useCallback((
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
@@ -126,19 +134,21 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
             } as IngresoInsert;
         });
 
-        if (name === "codigo_producto") buscarProducto(value);
-    };
+        if (name === "codigo_producto" && debouncedSearch.current) {
+            debouncedSearch.current(value);
+        }
+    }, []);
 
     // Manejador para Select y RadioGroup
-    const handleValueChange = (name: keyof IngresoInsert, val: string) => {
+    const handleValueChange = useCallback((name: keyof IngresoInsert, val: string) => {
         setForm(prev => ({
             ...prev,
             [name]: val.toUpperCase(),
         }));
-    };
+    }, []);
 
     // Construir payload limpio
-    const buildPayload = (): IngresoInsert => {
+    const buildPayload = useCallback((): IngresoInsert => {
         return {
             auth_uid: form.auth_uid,
             correo: form.correo,
@@ -157,9 +167,9 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
             nota: cleanString(form.nota),
             fecha_cad: form.fecha_cad === "" ? null : form.fecha_cad,
         } as IngresoInsert;
-    };
+    }, [form]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
@@ -168,8 +178,12 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
             const payload = buildPayload();
 
             // Validación de campos obligatorios
-            if (!payload.sucursal || !payload.bodega || !payload.codigo_producto || payload.cantidad_ingreso <= 0 || !payload.auth_uid || !payload.nombre_prod) {
-                throw new Error("Por favor, complete todos los campos obligatorios (Sucursal, Bodega, Código Producto, Nombre y Cantidad).");
+            if (!payload.sucursal || !payload.bodega || !payload.codigo_producto || !payload.auth_uid || !payload.nombre_prod) {
+                throw new Error("Por favor, complete todos los campos obligatorios (Sucursal, Bodega, Código Producto, Nombre).");
+            }
+
+            if (payload.cantidad_ingreso < 0.01) {
+                throw new Error("La cantidad debe ser mayor a 0.");
             }
 
             // LÓGICA: Solo inserción
@@ -188,20 +202,22 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [buildPayload]);
 
-    const handleModalClose = () => {
+    const handleModalClose = useCallback(() => {
         setShowSuccess(false);
         onSuccess(); // Dispara la recarga de datos en el padre
-    };
+    }, [onSuccess]);
 
     // Lógica del QR separada
-    const handleQrResult = async (codigo: string) => {
+    const handleQrResult = useCallback(async (codigo: string) => {
         setOpenQr(false); // Cerrar el modal
         const codigoUpper = codigo.toUpperCase();
         setForm(prev => ({ ...prev, codigo_producto: codigoUpper }));
-        await buscarProducto(codigoUpper);
-    };
+        if (debouncedSearch.current) {
+            debouncedSearch.current(codigoUpper);
+        }
+    }, []);
 
 
     return (
@@ -246,10 +262,11 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                                 <SelectValue placeholder="Selecciona una sucursal" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="HIJUELAS">HIJUELAS</SelectItem>
-                                <SelectItem value="OSORNO">OSORNO</SelectItem>
-                                <SelectItem value="ICA">ICA</SelectItem>
-                                <SelectItem value="QUERÉTARO">QUERÉTARO</SelectItem>
+                                {SUCURSALES.map((sucursal) => (
+                                    <SelectItem key={sucursal} value={sucursal}>
+                                        {sucursal}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -265,8 +282,11 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                                 <SelectValue placeholder="Selecciona una bodega" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="INVITRO LAB">INVITRO LAB</SelectItem>
-                                <SelectItem value="HARDENING">HARDENING</SelectItem>
+                                {BODEGAS.map((bodega) => (
+                                    <SelectItem key={bodega} value={bodega}>
+                                        {bodega}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -337,6 +357,7 @@ export const IngresoForm: React.FC<Props> = ({ onSuccess }) => {
                         <Input
                             type="number"
                             step="0.01"
+                            min="0.01"
                             name="cantidad_ingreso"
                             value={form.cantidad_ingreso}
                             onChange={handleChange}

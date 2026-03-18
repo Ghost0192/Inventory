@@ -43,3 +43,23 @@ export const formatDateForDisplay = (dateStr: string | null): string => {
   }
 };
 
+/**
+ * Creates a debounced version of a function
+ * @param fn - The function to debounce
+ * @param delay - Delay in milliseconds (default: 300ms)
+ */
+export const debounce = <T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number = 300
+): ((...args: Parameters<T>) => void) => {
+  let timeoutId: NodeJS.Timeout | null = null;
+
+  return (...args: Parameters<T>) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+};
+
+

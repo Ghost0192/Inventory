@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Producto, ProductoInsert } from "../types";
 import { supabase } from "@/lib/supabaseClient";
+import { cleanString } from "@/lib/utils";
+import { SUCURSALES, PRODUCT_CATEGORIES, UNITS } from "@/lib/constants";
 
 import { Input } from "@/components/ui/input";
-{/*import { Textarea } from "@/components/ui/textarea";*/}
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -74,25 +75,52 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
     }, [producto]);
 
     /* Payload limpio (MAYÚSCULAS) */
-    const buildPayload = () => ({
+    const buildPayload = useCallback(() => ({
         auth_uid: form.auth_uid,
         correo: form.correo,
         sucursal: form.sucursal.toUpperCase(),
         nombre_prod: form.nombre_prod.toUpperCase(),
-        descripcion_prod: form.descripcion_prod?.toUpperCase() || null,
-        categoria_prod: form.categoria_prod?.toUpperCase() || null,
-        unidad_medida: form.unidad_medida?.toUpperCase() || null,
+        descripcion_prod: cleanString(form.descripcion_prod),
+        categoria_prod: cleanString(form.categoria_prod),
+        unidad_medida: cleanString(form.unidad_medida),
         stock_min: form.stock_min,
         activo: form.activo,
-    });
+    }), [form]);
 
     /* Submit (INSERT / UPDATE) */
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
+            // Pre-submit validation - done synchronously on current state
+            if (!form.nombre_prod?.trim()) {
+                setError("El nombre del producto es requerido.");
+                setLoading(false);
+                return;
+            }
+            if (!form.descripcion_prod?.trim()) {
+                setError("La descripción es requerida.");
+                setLoading(false);
+                return;
+            }
+            if (!form.categoria_prod?.trim()) {
+                setError("La categoría es requerida.");
+                setLoading(false);
+                return;
+            }
+            if (!form.unidad_medida?.trim()) {
+                setError("La unidad de medida es requerida.");
+                setLoading(false);
+                return;
+            }
+            if ((form.stock_min ?? 0) < 0) {
+                setError("El stock mínimo debe ser un número válido y no negativo.");
+                setLoading(false);
+                return;
+            }
+
             const payload = buildPayload();
 
             if (producto) {
@@ -110,6 +138,16 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
 
                 if (error) throw error;
                 setModalMessage("El producto fue creado correctamente.");
+                // Reset form after successful create
+                setForm(prev => ({
+                    ...prev,
+                    nombre_prod: "",
+                    descripcion_prod: "",
+                    categoria_prod: "",
+                    unidad_medida: "",
+                    stock_min: 0,
+                    activo: true,
+                }));
             }
 
             setShowSuccess(true);
@@ -122,24 +160,41 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [buildPayload, producto, form]);
 
     /* Handlers */
-    const handleChange = (
+    const handleChange = useCallback((
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value, type } = e.target;
 
-        setForm(prev => ({
-            ...prev,
-            [name]: type === "number" ? Number(value) : value.toUpperCase(),
-        }));
-    };
+        setForm(prev => {
+            let newValue: string | number = value;
 
-    const handleModalClose = () => {
+            if (type === "number") {
+                // Parse number, keep previous value if invalid
+                if (value === "") {
+                    newValue = 0;
+                } else {
+                    const parsed = Number(value);
+                    newValue = isNaN(parsed) ? (prev[name as keyof ProductoInsert] as number) : parsed;
+                }
+            } else {
+                // Only uppercase text fields
+                newValue = value.toUpperCase();
+            }
+
+            return {
+                ...prev,
+                [name]: newValue,
+            };
+        });
+    }, []);
+
+    const handleModalClose = useCallback(() => {
         setShowSuccess(false);
         onSuccess();
-    };
+    }, [onSuccess]);
 
     /* Render */
     return (
@@ -180,10 +235,11 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                                 <SelectValue placeholder="Selecciona una sucursal" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="HIJUELAS">HIJUELAS</SelectItem>
-                                <SelectItem value="OSORNO">OSORNO</SelectItem>
-                                <SelectItem value="ICA">ICA</SelectItem>
-                                <SelectItem value="QUERETARO">QUERÉTARO</SelectItem>
+                                {SUCURSALES.map((sucursal) => (
+                                    <SelectItem key={sucursal} value={sucursal}>
+                                        {sucursal}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -210,18 +266,6 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                         />
                     </div>
 
-                    {/* 
-                    <div className="md:col-span-1">
-                        <Label>Descripción</Label>
-                        <Textarea
-                            name="descripcion_prod"
-                            value={form.descripcion_prod}
-                            onChange={handleChange}
-                            rows={3}
-                            className="uppercase"
-                        />
-                    </div>*/}
-
                     <div>
                         <Label>Categoría</Label>
                         <Select
@@ -234,11 +278,11 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                                 <SelectValue placeholder="Selecciona una categoría" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="CONTENEDOR">CONTENEDOR</SelectItem>
-                                <SelectItem value="AGROQUIMICO">AGROQUÍMICOS</SelectItem>
-                                <SelectItem value="FERTILIZANTE">FERTILIZANTE</SelectItem>
-                                <SelectItem value="FUNGICIDA">FUNGICIDA</SelectItem>
-                                <SelectItem value="INSUMO">INSUMO</SelectItem>
+                                {PRODUCT_CATEGORIES.map((category) => (
+                                    <SelectItem key={category} value={category}>
+                                        {category}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -255,11 +299,11 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                                 <SelectValue placeholder="Selecciona unidad" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="UNIDAD">UNIDAD</SelectItem>
-                                <SelectItem value="KILOGRAMOS">KILOGRAMOS</SelectItem>
-                                <SelectItem value="LITROS">LITROS</SelectItem>
-                                <SelectItem value="GRAMOS">GRAMOS</SelectItem>
-                                <SelectItem value="MILILITROS">MILILITROS</SelectItem>
+                                {UNITS.map((unit) => (
+                                    <SelectItem key={unit} value={unit}>
+                                        {unit}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -269,6 +313,8 @@ export const ProductoForm: React.FC<Props> = ({ producto, onSuccess }) => {
                         <Input
                             type="number"
                             name="stock_min"
+                            min="0"
+                            step="0.01"
                             value={form.stock_min}
                             onChange={handleChange}
                         />
