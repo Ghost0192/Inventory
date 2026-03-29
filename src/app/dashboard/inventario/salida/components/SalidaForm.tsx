@@ -253,7 +253,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         <Label>Sucursal</Label>
                         <Select
                             value={form.sucursal}
-                            onValueChange={(val) => setForm({ ...form, sucursal: val })}
+                            onValueChange={(val) => handleValueChange("sucursal", val)}
                             required
                         >
                             <SelectTrigger className="w-full">
@@ -315,7 +315,7 @@ export const SalidaForm: React.FC<Props> = ({ onSuccess }) => {
                         <Label>Área destino</Label>
                         <Select
                             value={form.area_destino}
-                            onValueChange={(val) => setForm({ ...form, area_destino: val })}
+                            onValueChange={(val) => handleValueChange("area_destino", val)}
                             required
                         >
                             <SelectTrigger className="w-full">
